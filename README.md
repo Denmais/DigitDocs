@@ -2,4 +2,4 @@
 
 **Логика приложения**
 
-![Логика работы](https://github.com/Denmais/DigitDocs/img/bl.png)
+![Логика работы](https://github.com/Denmais/DigitDocs/tree/main/img/bl.png)
