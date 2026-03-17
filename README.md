@@ -1,3 +1,3 @@
 # DigitDocs
 
-! [Логика работы](3333.png)
+! [Логика работы](https://github.com/Denmais/DigitDocs/img/bl.png)
