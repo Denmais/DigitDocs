@@ -1,0 +1,16 @@
+{
+  "upload_id": "a83f91cb-51aa-4d79-8ee9-71caa64f2a37",
+  "file_name": "Документ1.pdf",
+  "file_size": 482193,
+  "mime_type": "application/pdf",
+  "document_type": {
+    "id": "electricity",
+    "title": "Электроснабжение"
+  },
+  "storage": {
+    "file_url": "https://files.example.com/uploads/a83f91cb.pdf",
+    "preview_available": false
+  },
+  "status": "uploaded",
+  "uploaded_at": "2025-01-05T12:31:00Z"
+}

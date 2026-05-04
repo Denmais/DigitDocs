@@ -1,0 +1,209 @@
+/* === Root === */
+:root {
+  /* Colors */
+  --main-bg-color: #f5f5f5;
+  --white-color: #ffffff;
+  --light-gray-color: #eaeaea;
+  --gray-color: #e3e3e3;
+  --dark-gray-color: #737373;
+  --dark-gray-second-color: #c4c4c4;
+  --accent-color: #00ac86;
+  --dark-accent-color: #00a480;
+  --black-color: #404040;
+  --pdf-bg: #737373;
+
+  /* Shadows */
+  --shadow: 0 0 5px rgba(71, 71, 71, 0.25);
+
+  /* Font Styles */
+  --font-family: 'Open Sans', sans-serif;
+  --font-size: 62.5%;
+  --font-weight: 400;
+
+  /* Statusbar */
+  --steps-count: 5;
+  --active-step: 1;
+}
+
+/* === Main styles === */
+
+html {
+  scroll-behavior: smooth;
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
+  color: var(--black-color);
+  font-family: var(--font-family);
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+body {
+  font-size: 1.6rem;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  gap: 2rem;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+a,
+button {
+  transition: all 0.2s ease-in;
+}
+
+::selection {
+  color: var(--white-color);
+  background-color: var(--black-color);
+}
+
+.main__container {
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.main {
+  width: 100%;
+}
+
+/* === Main === */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* === Loader animation === */
+
+.popup__loader {
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.line-loader {
+  --uib-size: 120px;
+  --uib-color: #00ac86;
+  --uib-speed: 1.4s;
+  --uib-stroke: 5px;
+  --uib-bg-opacity: .1;
+
+  position: relative;
+  height: var(--uib-stroke);
+  width: var(--uib-size);
+  border-radius: calc(var(--uib-stroke) / 2);
+  overflow: hidden;
+  width: 100%;
+}
+
+.line-loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--uib-color);
+  opacity: var(--uib-bg-opacity);
+}
+
+.line-loader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--uib-stroke) / 2);
+  animation: zoom var(--uib-speed) ease-in-out infinite;
+  transform: translateX(-100%);
+  background-color: var(--uib-color);
+}
+
+@keyframes zoom {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* === Fade-in animation === */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sidebar,
+.statusbar,
+.actions {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+body.loaded .sidebar,
+body.loaded .statusbar,
+body.loaded .actions {
+  animation: fadeSlideUp 0.6s ease forwards;
+}
+
+body.loaded .statusbar {
+  animation-delay: 0.15s;
+}
+
+body.loaded .actions {
+  animation-delay: 0.3s;
+}
+
+/* === Dark theme === */
+
+:root[data-theme='dark'] {
+  --main-bg-color: #181818;
+  --white-color: #222;
+  --light-gray-color: #2a2a2a;
+  --gray-color: #333;
+  --dark-gray-color: #aaa;
+  --dark-gray-second-color: #555;
+  --accent-color: #00cfa5;
+  --dark-accent-color: #00a480;
+  --black-color: #f5f5f5;
+  --shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  --pdf-bg: #363636;
+}
+
+:root[data-theme='dark'] body {
+  background-color: var(--main-bg-color);
+  color: var(--black-color);
+}
+
+:root[data-theme='dark'] .actions,
+:root[data-theme='dark'] .statusbar,
+:root[data-theme='dark'] .upload-zone {
+  background-color: var(--white-color);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='dark'] .sidebar {
+  background-color: #1f1f1f;
+}
+
+:root[data-theme='dark'] .sidebar .navbar__link,
+:root[data-theme='dark'] .statusbar__item--active .statusbar__label {
+  color: var(--black-color);
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .form__label {
+  color: var(--dark-gray-color);
+}
+
+:root[data-theme='dark'] .accent__btn {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+:root[data-theme='dark'] .accent__btn:hover {
+  background-color: var(--dark-accent-color);
+}

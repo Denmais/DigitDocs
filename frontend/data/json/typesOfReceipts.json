@@ -1,0 +1,20 @@
+{
+  "types": [
+    {
+      "name": "electricity",
+      "title": "Электроснабжение"
+    },
+    {
+      "name": "water_cold",
+      "title": "Водоснабжение (холодная вода)"
+    },
+    {
+      "name": "water_hot",
+      "title": "Горячее водоснабжение"
+    },
+    {
+      "name": "receipt",
+      "title": "Товарный чек"
+    }
+  ]
+}

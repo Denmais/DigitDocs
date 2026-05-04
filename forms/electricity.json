@@ -1,0 +1,30 @@
+{
+  "fields": [
+    {
+      "id": "tariff_kw_day",
+      "label": "Тариф (день), ₽/кВт·ч",
+      "type": "number",
+      "unit": "₽/кВт·ч",
+      "required": true,
+      "tooltip": "Выделите на чеке дневной тариф",
+      "constraints": { "min": 0, "max": 999 }
+    },
+    {
+      "id": "tariff_kw_night",
+      "label": "Тариф (ночь), ₽/кВт·ч",
+      "type": "number",
+      "unit": "₽/кВт·ч",
+      "required": false,
+      "tooltip": "Выделите на чеке ночной тариф",
+      "constraints": { "min": 0, "max": 999 }
+    },
+    {
+      "id": "period",
+      "label": "Период",
+      "type": "text",
+      "required": true,
+      "placeholder": "мм.гггг",
+      "pattern": "^(0[1-9]|1[0-2])\\.\\d{4}$"
+    }
+  ]
+}

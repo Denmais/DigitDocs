@@ -1,0 +1,32 @@
+.crop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 10;
+}
+
+.crop-overlay__hint {
+  position: absolute;
+  top: 1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #00ac86;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 1.6rem;
+  font-size: 2.3rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.crop-overlay__hint p {
+  font-size: 2rem;
+  font-weight: 100;
+}
+
+.crop-rect {
+  position: absolute;
+  border: 2px dashed #00ac86;
+  background: rgba(0, 172, 134, 0.15);
+  display: none;
+}

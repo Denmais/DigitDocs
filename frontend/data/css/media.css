@@ -1,0 +1,65 @@
+/* Адаптив для средних и маленьких экранов */
+@media (max-width: 1800px) {
+  html {
+    /* На экранах меньше 4K уменьшаем базу, чтобы интерфейс не был огромным */
+    font-size: 50%; /* 1rem станет 8px вместо 10px */
+  }
+  
+  .navbar__header {
+    gap: 2rem;
+  }
+
+  .navbar__logo {
+    padding-bottom: 2rem;
+  }
+
+  .navbar__link--img {
+    max-width: 50%;
+  }
+
+  .data-selection__viewer {
+    height: calc(100vh - 185px);
+  }
+}
+
+@media (max-width: 1485px) {
+  html {
+    font-size: 35%;
+  }
+
+  .data-selection__viewer {
+    height: calc(100vh - 120px);
+  }
+
+  .result__card,
+  .result__actions {
+    max-width: 520px;
+  }
+
+  .crop-overlay__hint {
+    font-size: 7rem;
+    padding: 3rem;
+    border-radius: 3.6rem;
+  }
+
+  .crop-overlay__hint p {
+    font-size: 5rem;
+  }
+}
+
+@media (max-width: 940px) {
+  html {
+    font-size: 25%;
+  }
+
+  .data-selection__viewer {
+    height: calc(100vh - 90px);
+  }
+}
+
+/* Фикс для очень высоких разрешений (4K+) */
+@media (min-width: 2561px) {
+  html {
+    font-size: 90%;
+  }
+}

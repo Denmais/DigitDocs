@@ -1,0 +1,285 @@
+.history {
+    display: flex;
+    flex-direction: column;
+    /* Ограничиваем высоту: 100% высоты родителя минус возможные внешние отступы */
+    height: 100%; 
+    gap: 2rem;
+}
+
+/* Контейнер списка — именно здесь будет скролл */
+.history__list {
+    flex: 1; /* Занимает всё оставшееся место в .history */
+    overflow-y: auto; /* Включаем вертикальный скролл */
+    padding-right: 1rem;
+    padding-left: 1rem;
+    padding-top: 1rem;
+    
+    /* Стилизация скроллбара (Chrome, Safari, Edge) */
+    scrollbar-width: thin; /* Для Firefox */
+    scrollbar-color: transparent transparent; /* Скрываем по умолчанию */
+}
+
+/* Настройка скроллбара для Webkit (Chrome/Safari) */
+.history__list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history__list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.history__list::-webkit-scrollbar-thumb {
+    background-color: transparent; /* Скрыт по умолчанию */
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+/* Показываем скроллбар при наведении на список */
+.history__list:hover {
+    scrollbar-color: var(--accent-color) transparent; /* Для Firefox */
+}
+
+.history__list:hover::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color); /* Для Chrome */
+}
+
+/* Сброс стилей экшнбара */
+.history-mode {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    height: auto;
+    max-height: 100%;
+    overflow: hidden; /* Важно, чтобы скроллился только список внутри */
+}
+
+.history-mode::before,
+.history-mode::after {
+    display: none !important;
+}
+
+/* Скрываем стандартные элементы статусбара */
+.page-history .statusbar__list,
+.page-history .data-selection__header {
+    display: none !important;
+}
+
+/* Применяем специфичный паддинг и сброс кругов только в истории */
+.page-history #statusbar {
+    padding: 4rem;
+    background: var(--white-color);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.page-history #statusbar::before,
+.page-history #statusbar::after {
+    display: none !important;
+}
+
+/* Убираем оформление экшнбара */
+.page-history .actions {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.page-history .actions::before,
+.page-history .actions::after {
+    display: none !important;
+}
+
+/* Оформление хедера истории внутри статусбара */
+.page-history .history__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.page-history .history__header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Кнопка "Развернуть все" */
+.history__expand-all {
+    background-color: var(--accent-color);
+    color: var(--white-color);
+    text-transform: uppercase;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.8rem;
+    padding: 1.5rem 2.5rem;
+}
+
+.history__expand-all:hover {
+    background: var(--accent-color);
+    color: var(--white-color);
+}
+
+.history__expand-all.active {
+    background: var(--black-color);
+    border-color: var(--black-color);
+    color: var(--white-color);
+}
+
+.page-history .history__header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--black-color);
+}
+
+:root[data-theme='light'] .history__header-icon {
+    filter: invert(21%) sepia(0%) saturate(1%) hue-rotate(167deg) brightness(109%) contrast(92%);
+}
+
+/* Стили карточек и таблицы (с плавной анимацией из предыдущего шага) */
+.history-card {
+    background: var(--white-color);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.history-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.history-card__file {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-weight: 600;
+    color: var(--black-color);
+    font-size: 1.6rem;
+}
+
+.history-card__date {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: var(--black-color);
+    font-weight: 500;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--accent-color);
+    border-radius: 1.2rem;
+    overflow: hidden;
+}
+
+.history-table thead {
+    background-color: var(--accent-color);
+}
+
+.history-table th {
+    color: var(--white-color);
+    text-transform: uppercase;
+    font-weight: 800;
+    font-size: 1.2rem;
+    padding: 1.2rem;
+    text-align: center;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.history-table th:last-child {
+    border-right: none;
+}
+
+.history-table td {
+    padding: 1.2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--accent-color);
+    border-right: 1px solid var(--accent-color);
+    color: var(--black-color);
+    font-weight: 600;
+}
+
+.history-table td:last-child {
+    border-right: none;
+}
+
+.history-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Контейнер таблицы: используем Grid для вычисления реальной высоты */
+.history-card__table {
+    display: grid;
+    grid-template-rows: 0fr; /* Изначально высота "0" контента */
+    opacity: 0;
+    margin-top: 0;
+    overflow: hidden;
+    /* Плавная кривая Безье для эффекта инерции */
+    transition: 
+        grid-template-rows 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.4s ease,
+        margin-top 0.4s ease;
+}
+
+/* Обертка внутри Grid обязательна для корректной анимации */
+.history-card__table-inner {
+    min-height: 0;
+}
+
+/* Состояние при развертывании */
+.history-card__table.visible {
+    grid-template-rows: 1fr; /* Контент занимает столько места, сколько ему нужно */
+    opacity: 1;
+    margin-top: 2rem;
+}
+
+/* Добавим небольшой эффект появления самой таблицы */
+.history-card__table .history-table {
+    transform: translateY(-10px);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.history-card__table.visible .history-table {
+    transform: translateY(0);
+}
+
+/* Стили кнопки и анимация стрелки */
+.history-card__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+.history-card__toggle svg {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Поворот стрелки при активном состоянии */
+.history-card__toggle.active svg {
+    transform: rotate(180deg);
+}
+
+.toggle-text {
+    transition: color 0.2s ease;
+}
+
+.history-card__toggle:hover .toggle-text {
+    color: var(--dark-accent-color);
+}

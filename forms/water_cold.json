@@ -1,0 +1,30 @@
+{
+  "fields": [
+    {
+      "id": "meter_value",
+      "label": "Показания счётчика (ХВС), м³",
+      "type": "number",
+      "unit": "м³",
+      "required": true,
+      "tooltip": "Выделите показания по холодной воде",
+      "constraints": { "min": 0, "max": 999999 }
+    },
+    {
+      "id": "consumption",
+      "label": "Расход (ХВС), м³",
+      "type": "number",
+      "unit": "м³",
+      "required": false,
+      "tooltip": "Выделите расход холодной воды",
+      "constraints": { "min": 0, "max": 999999 }
+    },
+    {
+      "id": "period",
+      "label": "Период",
+      "type": "text",
+      "required": true,
+      "placeholder": "мм.гггг",
+      "pattern": "^(0[1-9]|1[0-2])\\.\\d{4}$"
+    }
+  ]
+}

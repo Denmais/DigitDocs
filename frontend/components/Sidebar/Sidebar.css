@@ -1,0 +1,153 @@
+/* === Sidebar === */
+
+.sidebar {
+  background-color: var(--accent-color);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow);
+  padding: 3rem 1.5rem;
+  width: 38rem;
+  transition: all 0.25s ease-in-out;
+}
+
+.sidebar--close {
+  width: 15rem;
+}
+
+.navbar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.navbar__header {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+  width: 100%;
+}
+
+.navbar__logo {
+  width: 100%;
+  text-align: center;
+  padding-bottom: 4rem;
+
+  border-bottom: 0.2rem solid hsla(0, 0%, 100%, 0.5);
+}
+
+.navbar__logo-img {
+  width: 70%;
+}
+
+.navbar__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.navbar__item {
+  background-color: transparent;
+  padding: 1rem;
+  border-radius: 1rem;
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar__item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow);
+}
+
+.navbar__item--active {
+  background-color: rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow);
+
+  position: relative;
+}
+
+.navbar__item--active:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.navbar__item--active::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.2rem;
+  height: 2.2rem;
+  background: url(../../data/images/arrows.svg);
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.navbar__link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--white-color);
+  font-size: 1.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar__link--img {
+  width: 3.2rem;
+  height: 3.2rem;
+}
+
+.navbar__link--label {
+  opacity: 1;
+  width: auto;
+  max-width: 20rem;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar--close .navbar__link--label {
+  opacity: 0;
+  max-width: 0;
+  margin: 0;
+}
+
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.theme-toggle img {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
+}
+
+.navbar__bottom {
+  display: flex;
+  /* flex-direction: column; */
+  align-items: center;
+  gap: 2rem;
+}
+
+.navbar__profile-link {
+  display: block;
+  height: 100%;
+}
+
+.navbar__profile-img {
+  width: 3.2rem;
+  height: 3.2rem;
+}

@@ -1,0 +1,146 @@
+/**
+ * ApiService
+ *
+ * Универсальный слой работы с backend API.
+ *
+ * ⚠️ ВАЖНО:
+ * На текущем этапе приложения этот сервис МОЖЕТ НЕ ИСПОЛЬЗОВАТЬСЯ,
+ * т.к. часть запросов реализована напрямую через fetch или mock-сервисы.
+ *
+ * Этот файл предназначен:
+ * - для будущего подключения реального backend
+ * - для централизованного управления API-вызовами
+ *
+ * Backend может ориентироваться на ЭТИ МЕТОДЫ как на контракт.
+ */
+
+import { API_CONFIG } from '../constants/api.js';
+
+export class ApiService {
+  /**
+   * Загрузка PDF-документа на сервер
+   *
+   * @param {File} file       - PDF-файл, выбранный пользователем
+   * @param {string} typeId   - ID типа документа (например: "electricity")
+   * @param {string} comment  - необязательный комментарий
+   *
+   * @returns {Promise<Object>}
+   *
+   * Ожидаемый ответ backend:
+   * {
+   *   upload_id: "abc123",
+   *   status: "uploaded"
+   * }
+   *
+   * Backend:
+   * - принимает multipart/form-data
+   * - поле file - бинарный PDF
+   * - поле type_id - строка
+   */
+  static async uploadFile(file, typeId, comment = '') {
+    const formData = new FormData();
+
+    // Тип документа (категория)
+    formData.append('type_id', typeId);
+
+    // Сам PDF-файл
+    formData.append('file', file);
+
+    // Необязательный комментарий
+    if (comment) {
+      formData.append('comment', comment);
+    }
+
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`,
+      {
+        method: 'POST',
+        body: formData,
+        headers: API_CONFIG.DEFAULT_HEADERS,
+      }
+    );
+
+    // Обработка ошибки HTTP
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Получение статуса загрузки / обработки файла
+   *
+   * Используется для:
+   * - polling
+   * - отображения прогресса
+   *
+   * @param {string} uploadId
+   *
+   * @returns {Promise<Object>}
+   *
+   * Ожидаемый ответ backend:
+   * {
+   *   status: "processing" | "done" | "error",
+   *   progress: 60
+   * }
+   */
+  static async getUploadStatus(uploadId) {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.STATUS}/${uploadId}`,
+      {
+        headers: API_CONFIG.DEFAULT_HEADERS,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Status check failed: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Запуск обработки загруженного документа
+   *
+   * Backend:
+   * - начинает OCR / парсинг / анализ PDF
+   * - формирует task_id
+   *
+   * @param {string} uploadId
+   *
+   * @returns {Promise<Object>}
+   *
+   * Ожидаемый ответ backend:
+   * {
+   *   task_id: "b7e2d0af",
+   *   pages: [
+   *     { page: 1, image_url: "..." }
+   *   ],
+   *   fields: [
+   *     { id, label, type, unit }
+   *   ]
+   * }
+   */
+  static async processDocument(uploadId) {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PROCESS}`,
+      {
+        method: 'POST',
+        headers: {
+          ...API_CONFIG.DEFAULT_HEADERS,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          upload_id: uploadId,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Process failed: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+}

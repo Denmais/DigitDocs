@@ -1,0 +1,118 @@
+/* === Custom select === */
+.custom-select {
+  position: relative;
+  width: 45rem;
+  max-width: 100%;
+}
+
+.select-button {
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1.5rem 2rem 1.5rem 4rem;
+  border: 0.15rem solid var(--gray-color);
+  border-radius: 1rem;
+  background-color: var(--white-color);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  text-transform: uppercase;
+
+  position: relative;
+}
+
+.select-button::before {
+  content: '';
+  position: absolute;
+  left: 1.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: url('../../data/images/document.svg');
+  width: 1.5rem;
+  height: 2rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.select-button:hover {
+  border-color: var(--accent-color);
+}
+
+.arrow {
+  margin-left: auto;
+  transition: transform ease-in-out 0.3s;
+  width: 2.6rem;
+  height: 1.4rem;
+}
+
+.select-button.open .arrow {
+  transform: rotate(180deg);
+}
+
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: 0;
+  width: 100%;
+  border: 0.1rem solid var(--gray-color);
+  border-radius: 1rem;
+  background-color: var(--white-color);
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  box-shadow: var(--shadow);
+  max-height: 20rem;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.select-dropdown::-webkit-scrollbar {
+  width: 1rem; /* Width scrollbar */
+}
+
+.select-dropdown::-webkit-scrollbar-track {
+  background: transparent; /* Color line */
+}
+
+.select-dropdown::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color); /* Color bg */
+  border-radius: 2rem; /* Border radius bg */
+  border: 3px solid var(--white-color); /* Badding around line */
+}
+
+.select-dropdown li {
+  padding: 1.5rem 1.5rem 1.5rem 3.5rem;
+  cursor: pointer;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  position: relative;
+  font-weight: 600;
+}
+
+.select-dropdown li:not(:last-child) {
+  border-bottom: 0.1rem solid var(--gray-color);
+}
+
+.select-dropdown li::before {
+  content: '';
+  position: absolute;
+  left: 1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: url('../../data/images/document.svg');
+  width: 1.5rem;
+  height: 2rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.select-dropdown li.selected {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.select-dropdown li:hover {
+  background-color: var(--light-gray-color);
+}

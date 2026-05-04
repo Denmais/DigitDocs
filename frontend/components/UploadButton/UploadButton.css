@@ -1,0 +1,80 @@
+/* === Upload zone === */
+
+.upload-zone {
+  width: 45rem;
+  max-width: 100%;
+  text-align: center;
+  padding: 4rem 1.5rem;
+  border-radius: 1rem;
+
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='10' ry='10' stroke='%23C4C4C4' stroke-width='2' stroke-dasharray='10 8' stroke-linecap='round'/%3e%3c/svg%3e");
+  background-color: rgba(227, 227, 227, 0.48);
+  transition: all 0.3s ease;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  background-color: rgba(0, 172, 134, 0.05);
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='10' ry='10' stroke='%2300AC86' stroke-width='2' stroke-dasharray='10 8' stroke-linecap='round'/%3e%3c/svg%3e");
+}
+
+.upload-zone.uploaded {
+  background-color: #f9f9f9;
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='10' ry='10' stroke='%2300AC86' stroke-width='2' stroke-dasharray='4 3' stroke-linecap='round'/%3e%3c/svg%3e");
+}
+
+.upload-zone__text {
+  font-size: 1.4rem;
+  color: var(--dark-gray-color);
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+}
+
+.upload-zone__file {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--black-color);
+  margin-top: 0.5rem;
+}
+
+.upload-zone__btn {
+  background-color: var(--dark-gray-second-color);
+  border: none;
+  font-size: 1.4rem;
+  border-radius: 0.6rem;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  color: var(--dark-gray-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: .1rem solid transparent;
+  transition: all 0.25s ease;
+}
+
+.upload-zone__btn img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.upload-zone__btn:hover {
+  background-color: var(--gray-color);
+  border-color: var(--dark-gray-color);
+  font-weight: 600;
+}
+
+.upload-zone.uploaded .upload-zone__text {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

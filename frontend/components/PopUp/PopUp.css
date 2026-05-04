@@ -1,0 +1,132 @@
+/* === Popup Overlay === */
+.popup__overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: popupFadeIn 0.3s ease forwards;
+}
+
+@keyframes popupFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* === Popup Window === */
+.popup__window {
+  background-color: var(--white-color);
+  border-radius: 1.2rem;
+  padding: 3rem;
+  width: 34rem;
+  box-shadow: var(--shadow);
+  animation: popupSlideIn 0.35s ease forwards;
+}
+
+@keyframes popupSlideIn {
+  from {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* === Title === */
+.popup__title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--black-color);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* === File Info === */
+.popup__file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  background: var(--light-gray-color);
+  padding: 1rem 1.2rem;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--dark-gray-color);
+}
+
+.popup__file img {
+  width: 2rem;
+  height: 2.6rem;
+}
+
+.popup__filename {
+  flex: 1;
+  text-align: left;
+  font-weight: 600;
+  color: var(--black-color);
+}
+
+.popup__percent {
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+/* === Progress Bar === */
+.popup__progress {
+  height: 0.6rem;
+  background: var(--gray-color);
+  border-radius: 0.5rem;
+  margin: 1.5rem 0 2rem;
+  overflow: hidden;
+}
+
+.popup__progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-color);
+  border-radius: 0.5rem;
+  transition: width 0.3s ease;
+}
+
+/* === Cancel Button === */
+.popup__cancel {
+  width: 100%;
+  background-color: var(--accent-color);
+  color: var(--white-color);
+  border: none;
+  border-radius: 0.8rem;
+  padding: 1.2rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.popup__cancel:hover {
+  background-color: var(--dark-accent-color);
+  transform: scale(1.02);
+}
+
+/* === Dark Theme Support === */
+:root[data-theme='dark'] .popup__window {
+  background-color: #2a2a2a;
+  color: var(--black-color);
+}
+
+:root[data-theme='dark'] .popup__file {
+  background-color: #333;
+}
+
+:root[data-theme='dark'] .popup__progress {
+  background-color: #444;
+}

@@ -3,6 +3,7 @@ from models import DocumentType, UploadedFile, ExtractData
 from schemas import (UploadResponse, StorageInfo, DocumentTypeSerializer,
                      ExtractField, ExtractOutput, Source, CollectOutput, HistoryOutput)
 import os
+import re
 import datetime
 from flask import url_for
 import uuid
@@ -89,7 +90,7 @@ def process(db: Session, args):
 
     file_name = uploaded.filename
 
-    conv_data = convert_from_path(f"{PATH}/{file_name}", dpi=120)
+    conv_data = convert_from_path(f"{PATH}/{file_name}", dpi=150)
     for cnt, img in enumerate(conv_data):
         img.save(f"{UPLOADS}/{val_data['task_id']}_{cnt}.png", "PNG")
         val_data["pages"].append({
@@ -115,7 +116,7 @@ def extract(form, db):
         psm=6,
         oem=3
     ).strip()
-
+    text = re.sub(r'[^0-9.,]', '', text)
     print("OCR result:", text)
 
     form_path = get_form_path_for_task(db, val_data.task_id)

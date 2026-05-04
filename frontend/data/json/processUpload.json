@@ -1,0 +1,43 @@
+{
+  "task_id": "b7e2d0af",
+  "status": "done",
+  "progress": 100,
+  "document_type": { "id": "electricity", "title": "Электроснабжение" },
+
+  "pages": [
+    { "page": 1, "image_url": "./data/images/files/file.png" },
+    { "page": 2, "image_url": "./data/images/files/file-2.png" }
+  ],
+
+  "fields": [
+    {
+      "id": "tariff_kw_day",
+      "label": "Тариф (день), ₽/кВт·ч",
+      "type": "number",
+      "required": true,
+      "tooltip": "Выделите на чеке дневной тариф",
+      "unit": "RUB_PER_KWH",
+      "constraints": { "min": 0, "max": 1000, "step": 0.0001 },
+      "value": null
+    },
+    {
+      "id": "tariff_kw_night",
+      "label": "Тариф (ночь), ₽/кВт·ч",
+      "type": "number",
+      "required": false,
+      "tooltip": "Выделите на чеке ночной тариф",
+      "unit": "RUB_PER_KWH",
+      "constraints": { "min": 0, "max": 1000, "step": 0.0001 },
+      "value": null
+    },
+    {
+      "id": "period",
+      "label": "Период",
+      "type": "text",
+      "placeholder": "мм.гггг",
+      "pattern": "^(0[1-9]|1[0-2])\\.\\d{4}$",
+      "required": true,
+      "value": null
+    }
+  ]
+}
