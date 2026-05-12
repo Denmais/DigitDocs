@@ -528,8 +528,6 @@ http://127.0.0.1:5000
 - `pytesseract` — Python-обёртка;
 - `Tesseract OCR` — движок распознавания текста.
 
-Типичный pipeline обработки чека может включать:
-
 1. Чтение изображения.
 2. Перевод в оттенки серого.
 3. Удаление шума.
@@ -538,19 +536,6 @@ http://127.0.0.1:5000
 6. OCR-распознавание.
 7. Постобработку текста регулярными выражениями или правилами.
 
-Пример возможной обработки:
-
-```python
-import cv2
-import pytesseract
-
-image = cv2.imread("uploads/receipt.png")
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-text = pytesseract.image_to_string(gray, lang="rus+eng")
-print(text)
-```
-
----
 
 ## Работа с Excel
 
