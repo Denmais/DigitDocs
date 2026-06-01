@@ -118,7 +118,7 @@ def extract_data():
 
         val = extract(payload, db)
 
-        # extract() у тебя возвращает dict через model_dump()
+        # extract() возвращает dict через model_dump()
         return jsonify(val), 200
 
     except Exception as e:

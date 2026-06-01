@@ -7,8 +7,6 @@
  * - связь с backend API
  * - сбор данных и формирование результата
  *
- * Backend-разработчику:
- * 👉 если нужно понять логику приложения и API-flow - начинать отсюда.
  */
 
 import { ROOT_ACTIONBAR } from '../../constants/root.js';
@@ -79,8 +77,6 @@ class Actionbar {
     /**
      * Popup обработки документа.
      *
-     * Backend:
-     * 👉 в реальной версии здесь стартует /api/process
      */
     const popup = new PopUp();
     const popupButton = document.querySelector('#processBtn');
@@ -96,8 +92,6 @@ class Actionbar {
    *
    * Загружает список типов документов (mock JSON).
    *
-   * Backend:
-   * 👉 в проде это должен быть GET /api/document-types
    */
   async renderSelect() {
     const res = await fetch('/api/document-types');

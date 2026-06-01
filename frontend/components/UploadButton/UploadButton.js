@@ -7,9 +7,6 @@
  * - отправку файла на backend (пока MOCK)
  * - переход между шагами Statusbar
  *
- * Backend:
- * - Реальный upload будет происходить через POST /upload
- * - Сейчас используется mock JSON
  */
 
 import { nextStep, previousStep } from '../../utils/stepManager.js';

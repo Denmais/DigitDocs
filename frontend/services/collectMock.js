@@ -11,8 +11,6 @@
  * - демонстрации полного user-flow
  * - разработки без backend
  *
- * ⚠️ Backend:
- * Этот файл будет УДАЛЁН после подключения реального API.
  */
 
 export function collectMock({ task_id, fields }) {

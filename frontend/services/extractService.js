@@ -7,10 +7,6 @@
  * Используется ВМЕСТО:
  * POST /api/extract-field
  *
- * Backend:
- * - принимает координаты выделения
- * - выполняет OCR / ML / rule-based парсинг
- * - возвращает значение + confidence
  */
 
 export async function extractFieldMock({

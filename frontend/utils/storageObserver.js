@@ -9,8 +9,6 @@
  * - обновления заголовков
  * - синхронизации UI между компонентами
  *
- * Backend: значения в localStorage часто
- * основаны на данных, полученных от API.
  */
 
 export function createStorageObserver() {

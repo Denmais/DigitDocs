@@ -8,10 +8,6 @@
  * - выполненных шагов
  * - информации о загруженном файле и выбранной категории
  *
- * ❗ ВАЖНО для backend:
- * - Statusbar не управляет логикой шагов
- * - он лишь читает состояние из localStorage и DOM
- * - вся логика переходов реализована во frontend (stepManager.js)
  */
 
 import { ROOT_STATUSBAR } from '../../constants/root.js';

@@ -1,14 +1,4 @@
-/**
- * Сбор данных из формы перед отправкой в /api/collect
- *
- * Результат:
- * [
- *   { id: "tariff_kw_day", value: "4.32" },
- *   { id: "period", value: "12.2024" }
- * ]
- *
- * Backend ожидает этот формат БЕЗ изменений.
- */
+
 
 export function collectFieldsFromForm() {
   const fields = [];
