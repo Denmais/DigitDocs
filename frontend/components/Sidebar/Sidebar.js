@@ -19,9 +19,6 @@ class Sidebar {
     /**
      * Открытие сайдбара при наведении курсора
      *
-     * Backend:
-     * - нет сетевых запросов
-     * - нет логики состояния пользователя
      */
     ROOT_SIDEBAR.addEventListener('mouseover', () => {
       ROOT_SIDEBAR.classList.remove(this.classNameActive);
@@ -44,9 +41,6 @@ class Sidebar {
    * - переключатель темы
    * - иконку профиля
    *
-   * Backend:
-   * - ссылки сейчас статические
-   * - history / profile пока не подключены к API
    */
   render() {
     const html = `
@@ -142,9 +136,6 @@ class Sidebar {
    * - состояние хранится в localStorage
    * - backend не участвует
    *
-   * Backend:
-   * - тему можно игнорировать
-   * - если понадобится - можно синхронизировать позже
    */
   #initThemeToggle() {
     const toggleBtn = document.getElementById('themeToggle');

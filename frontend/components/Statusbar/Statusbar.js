@@ -36,9 +36,6 @@ class Statusbar {
   /**
    * Подписка на ключевые события localStorage
    *
-   * Backend:
-   * - uploadedFile приходит после успешной загрузки /upload
-   * - selectedCategory - выбранный тип документа
    */
   initObserver() {
     this.storageObserver.on('uploadedFile', () => {
@@ -83,9 +80,6 @@ class Statusbar {
     /**
      * Метаданные документа
      *
-     * Backend:
-     * - uploadedFile - имя файла, полученное от /upload
-     * - selectedCategory - title категории (для UI)
      */
     const fileName =
       localStorage.getItem('uploadedFile') || 'Ваш документ';
@@ -101,9 +95,6 @@ class Statusbar {
      * Хранится в localStorage и CSS-переменной
      * Обновляется через utils/stepManager.js
      *
-     * Backend:
-     * - шаги не приходят с сервера
-     * - это чисто UI-логика
      */
     const activeStep =
       Number(localStorage.getItem('activeStep')) || 1;

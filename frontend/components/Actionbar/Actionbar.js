@@ -225,8 +225,6 @@ class Actionbar {
     /**
      * Событие cropSelected
      *
-     * Backend:
-     * 👉 POST /api/extract-field
      */
     document.addEventListener('cropSelected', async (e) => {
       const { fieldId, page, crop } = e.detail;
@@ -549,8 +547,6 @@ class Actionbar {
   /**
    * Публикация результата в BI
    *
-   * Backend:
-   * 👉 POST /api/publish
    */
   async #publishToBI(resultId) {
     PopUp.showProcessing();

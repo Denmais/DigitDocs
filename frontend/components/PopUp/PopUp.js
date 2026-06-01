@@ -69,9 +69,6 @@ export class PopUp {
      * - шаг откатывается назад
      * - popup закрывается
      * - header скрывается
-     *
-     * Backendу:
-     * ❗ отмена НЕ отправляет запрос - чисто UI-логика
      */
     const cancelButton = document.querySelector('.popup__cancel');
 
@@ -124,8 +121,6 @@ export class PopUp {
    * - извлечении значения из crop
    * - отправке collect / publish
    *
-   * Backendу:
-   * 👉 отображается во время POST /api/extract-field и POST /api/collect
    */
   static showProcessing(text = 'Обработка фрагмента...') {
     const html = `

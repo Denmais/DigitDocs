@@ -20,6 +20,7 @@ class UploadedFile(Base):
         return f"{self.filename}"
 
 
+# Тип документа
 class DocumentType(Base):
     __tablename__ = "doctype"
 

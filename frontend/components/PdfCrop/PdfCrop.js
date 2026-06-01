@@ -135,8 +135,6 @@ function onMouseMove(e) {
  * - отправляем событие cropSelected
  * - выходим из режима кадрирования
  *
- * Backend-разработчику:
- * crop отправляется в extract-field API
  */
 function onMouseUp() {
   document.removeEventListener('mousemove', onMouseMove);

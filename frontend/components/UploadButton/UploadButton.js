@@ -47,7 +47,6 @@ export class UploadButton {
    * categorySelected - кастомное событие приложения
    * selectChange     - событие компонента Select
    *
-   * Backend:
    * - category.id передаётся как type_id
    */
   setupCategoryListener() {
@@ -243,10 +242,6 @@ export class UploadButton {
    *
    * POST /upload
    *
-   * Backend:
-   * ожидает multipart/form-data:
-   * - type_id
-   * - file
    */
    async #uploadToServer(file, typeTitle) {
     const formData = new FormData();
