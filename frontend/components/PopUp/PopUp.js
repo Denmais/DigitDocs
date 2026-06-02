@@ -1,45 +1,19 @@
-/**
- * PopUp
- *
- * Компонент модального окна, отвечающий за:
- * 1. отображение процесса обработки документа (progress bar),
- * 2. отмену обработки,
- * 3. переход к следующему шагу после завершения,
- * 4. получение результата обработки от backend (пока mock).
- *
- */
+
 
 import { ROOT_ACTIONBAR } from '../../constants/root.js';
 import { previousStep, nextStep } from '../../utils/stepManager.js';
 import { API_CONFIG } from '../../constants/api.js';
 
 export class PopUp {
-  /**
-   * render()
-   *
-   * Основной popup:
-   * - запускается после загрузки PDF
-   * - имитирует backend-обработку документа
-   * - по завершении передаёт данные в Actionbar
-   */
+
   render() {
-    /**
-     * Имя файла берётся из localStorage
-     * (устанавливается при upload)
-     */
+
     const fileName =
       localStorage.getItem('uploadedFile').length > 30
         ? localStorage.getItem('uploadedFile').slice(0, 20) + '...'
         : localStorage.getItem('uploadedFile');
 
-    /**
-     * HTML разметка popup:
-     * - overlay
-     * - окно
-     * - название файла
-     * - прогресс
-     * - кнопка отмены
-     */
+
     const html = `
       <div class="popup__overlay">
         <div class="popup__window">
@@ -62,14 +36,7 @@ export class PopUp {
     // Вставляем popup поверх Actionbar
     ROOT_ACTIONBAR.insertAdjacentHTML('beforeend', html);
 
-    /**
-     * Кнопка "Отмена"
-     *
-     * Поведение:
-     * - шаг откатывается назад
-     * - popup закрывается
-     * - header скрывается
-     */
+
     const cancelButton = document.querySelector('.popup__cancel');
 
     cancelButton.addEventListener('click', () => {
@@ -113,15 +80,7 @@ export class PopUp {
     }
   }
 
-  /**
-   * showProcessing()
-   *
-   * Маленький popup-индикатор,
-   * используется при:
-   * - извлечении значения из crop
-   * - отправке collect / publish
-   *
-   */
+
   static showProcessing(text = 'Обработка фрагмента...') {
     const html = `
       <div class="popup__overlay" id="extractPopup">

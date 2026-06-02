@@ -1,13 +1,3 @@
-/**
- * Actionbar - центральный контроллер интерфейса.
- *
- * Отвечает за:
- * - смену экранов (step-based flow)
- * - инициализацию UI-компонентов
- * - связь с backend API
- * - сбор данных и формирование результата
- *
- */
 
 import { ROOT_ACTIONBAR } from '../../constants/root.js';
 import { CustomSelect } from '../Select/Select.js';
@@ -24,25 +14,13 @@ import { showCropTourOnce } from '../../utils/showCropTour.js';
 
 class Actionbar {
   constructor() {
-    /**
-     * Слушаем глобальное событие начала crop.
-     *
-     * Событие генерируется компонентом Input
-     * при нажатии на кнопку "⛶" у поля.
-     */
+
     document.addEventListener('fieldCropStart', (e) =>
       this.#handleFieldCrop(e.detail)
     );
   }
 
-  /**
-   * render()
-   *
-   * Начальный экран приложения:
-   * - выбор типа документа
-   * - загрузка PDF
-   * - кнопка запуска обработки
-   */
+
   render() {
     document.body.classList.remove('page-history');
     
@@ -142,18 +120,7 @@ class Actionbar {
 
 
 
-  /**
-   * updateToDataSelectionUI()
-   *
-   * Вызывается после успешной обработки документа.
-   *
-   * processData приходит от backend:
-   * {
-   *   task_id,
-   *   pages: [{ image_url }],
-   *   fields: [{ id, label, type, constraints }]
-   * }
-   */
+
   updateToDataSelectionUI(processData) {
     ROOT_ACTIONBAR.classList.remove('actions');
 

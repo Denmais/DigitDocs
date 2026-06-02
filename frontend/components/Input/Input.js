@@ -1,15 +1,4 @@
-/**
- * CustomInput
- *
- * Компонент формы "Выбор данных".
- *
- * Отвечает за:
- * - отображение списка полей, которые нужно извлечь из документа
- * - ввод / редактирование значений
- * - запуск режима crop для конкретного поля
- * - визуальную подсветку активного поля
- *
- */
+
 
 export class CustomInput {
   /**
@@ -48,29 +37,18 @@ export class CustomInput {
       this.#highlightField(e.detail.fieldId);
     });
 
-    /**
-     * Событие: crop отменён (ESC)
-     * → убираем подсветку
-     */
+ 
     document.addEventListener('cropModeCanceled', () => {
       this.#clearHighlight();
     });
 
-    /**
-     * Событие: crop завершён
-     * → убираем подсветку
-     */
+
     document.addEventListener('cropSelected', () => {
       this.#clearHighlight();
     });
   }
 
-  /**
-   * #bindActions()
-   *
-   * Ловит клики по кнопке "⛶" у каждого поля.
-   * Запускает режим crop для конкретного fieldId.
-   */
+
   #bindActions() {
     this.rootEl.addEventListener('click', (e) => {
       // Ищем кнопку выбора фрагмента
@@ -95,12 +73,7 @@ export class CustomInput {
     });
   }
 
-  /**
-   * #highlightField()
-   *
-   * Подсвечивает активное поле,
-   * для которого пользователь сейчас выбирает фрагмент.
-   */
+
   #highlightField(fieldId) {
     this.#clearHighlight();
 
@@ -122,25 +95,7 @@ export class CustomInput {
       .forEach((el) => el.classList.remove('tariff-field--active'));
   }
 
-  /**
-   * #renderField()
-   *
-   * Генерирует HTML одного поля.
-   *
-   * @param {Object} field - описание поля от backend
-   *
-   * Ожидаемая структура поля:
-   * {
-   *   id: "tariff_kw_day",
-   *   label: "Тариф (день), ₽/кВт·ч",
-   *   type: "number" | "text",
-   *   required: true,
-   *   tooltip: "Подсказка",
-   *   unit: "RUB_PER_KWH",
-   *   constraints: { min, max, step },
-   *   value: "4.32"
-   * }
-   */
+
   #renderField(field) {
     const {
       id,

@@ -1,0 +1,49 @@
+#LoadModule wsgi_module "/usr/local/lib64/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so"
+
+#WSGIPythonHome "/usr"
+#LoadModule wsgi_module "/usr/local/lib64/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so"
+
+<VirtualHost *:80>
+    ServerName ghjk-ljbn-mnbv-jgva.ispvds.com
+    ServerAlias www.ghjk-ljbn-mnbv-jgva.ispvds.com
+    Redirect / https://ghjk-ljbn-mnbv-jgva.ispvds.com/
+</VirtualHost>
+
+<VirtualHost *:443>
+    # WSGIDaemonProcess api.rusefs.com user=apache group=apache threads=2
+    # WSGIScriptAlias / /data/api.rusefs.com/wsgi.py
+
+    ServerName ghjk-ljbn-mnbv-jgva.ispvds.com
+    ServerAlias www.ghjk-ljbn-mnbv-jgva.ispvds.com
+
+    WSGIDaemonProcess ghjk-ljbn-mnbv-jgva.ispvds.com user=apache group=apache threads=2 python-path=/home/invoice/bck:/usr/lib/python3.12/site-packages/
+    WSGIScriptAlias / /home/invoice/bck/wsgi.py
+    <Directory /home/invoice/bck>
+        Require all granted
+    </Directory>
+
+    Alias /uploads /home/invoice/bck/uploads
+    <Directory /home/invoice/bck/uploads/>
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    Alias /css /home/invoice/bck/frontend/data/css
+    <Directory /home/invoice/bck/frontend/data/css/>
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    Alias /img /home/invoice/bck/frontend/data/images
+    <Directory /home/invoice/bck/frontend/data/images>
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    Alias /json /home/invoice/bck/frontend/data/json
+    <Directory /home/invoice/bck/frontend/data/json>
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+

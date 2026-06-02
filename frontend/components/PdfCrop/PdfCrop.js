@@ -1,12 +1,4 @@
-/**
- * PdfCrop
- *
- * Модуль визуального выделения фрагмента PDF (crop).
- *
- * Используется на шаге "Выбор данных".
- * Пользователь мышью выделяет область на изображении страницы PDF.
- *
- */
+
 
 import { cropState, cancelCrop } from '../../utils/cropManager.js';
 import { viewerState } from '../../services/viewerState.js';
@@ -21,16 +13,7 @@ let startY = 0;
 let wrapper;   // Обёртка страницы PDF (учитывает zoom)
 let isActive = false;
 
-/**
- * enableCropMode()
- *
- * Включает режим кадрирования:
- * - показывает overlay
- * - включает crosshair-курсор
- * - начинает слушать mouse / keyboard события
- *
- * Вызывается из Actionbar при клике на кнопку "Выбрать фрагмент"
- */
+
 export function enableCropMode() {
   const canvas = document.querySelector('.viewer__canvas');
   if (!canvas) return;
@@ -64,15 +47,7 @@ export function enableCropMode() {
   // cropState.active = true;
 }
 
-/**
- * onKeyDown
- *
- * Обработчик клавиши ESC.
- *
- * Поведение:
- * - отменяет режим кадрирования
- * - не отправляет данные backend
- */
+
 function onKeyDown(e) {
   if (e.key === 'Escape') {
     cleanup();
@@ -80,14 +55,7 @@ function onKeyDown(e) {
   }
 }
 
-/**
- * onMouseDown
- *
- * Начало выделения:
- * - запоминаем стартовую точку
- * - учитываем zoom
- * - начинаем отслеживать движение мыши
- */
+
 function onMouseDown(e) {
   e.preventDefault();
   const rectWrapper = wrapper.getBoundingClientRect();
@@ -211,14 +179,7 @@ function getRenderScale() {
   return (viewerState.baseScale || 1) * (viewerState.zoom || 1);
 }
 
-/**
- * cleanup()
- *
- * Очистка режима кадрирования:
- * - удаляем overlay
- * - снимаем обработчики
- * - возвращаем обычный курсор
- */
+
 function cleanup() {
   // снять глобальные слушатели, если они висели
   document.removeEventListener('mousemove', onMouseMove);

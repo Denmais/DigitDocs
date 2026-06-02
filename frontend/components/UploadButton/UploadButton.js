@@ -1,14 +1,3 @@
-/**
- * UploadButton
- *
- * Компонент отвечает за:
- * - загрузку PDF-файла (drag & drop + кнопка)
- * - валидацию файла
- * - отправку файла на backend (пока MOCK)
- * - переход между шагами Statusbar
- *
- */
-
 import { nextStep, previousStep } from '../../utils/stepManager.js';
 import { API_CONFIG } from '../../constants/api.js';
 
@@ -19,18 +8,10 @@ export class UploadButton {
      */
     this.rootEl = document.getElementById(rootId);
 
-    /**
-     * Флаг первого аплоада.
-     * Используется для корректного управления шагами (next / previous)
-     */
+
     this.isFirstUpload = true;
 
-    /**
-     * selectedCategoryId
-     *
-     * Имя типа документа (electricity, water и т.д.)
-     * ВАЖНО: backend ожидает именно type_id / name, а не title
-     */
+
     this.selectedCategoryId = null;
     this.selectedCategoryTitle = null;
 
@@ -41,14 +22,7 @@ export class UploadButton {
     this.checkSavedCategory();
   }
 
-  /**
-   * Подписка на глобальные события выбора категории
-   *
-   * categorySelected - кастомное событие приложения
-   * selectChange     - событие компонента Select
-   *
-   * - category.id передаётся как type_id
-   */
+
   setupCategoryListener() {
     const selectRoot = document.getElementById('doc-type');
 
@@ -67,10 +41,7 @@ export class UploadButton {
     }
   }
 
-  /**
-   * Если пользователь обновил страницу -
-   * пробуем восстановить выбранную категорию из localStorage
-   */
+
   checkSavedCategory() {
     const savedId = (localStorage.getItem('selectedCategoryId') || '').trim();
     const savedTitle = (localStorage.getItem('selectedCategoryTitle') || '').trim();
@@ -114,12 +85,7 @@ export class UploadButton {
     this.init();
   }
 
-  /**
-   * Навешивание обработчиков:
-   * - кнопка
-   * - drag & drop
-   * - input[type=file]
-   */
+
   init() {
     const canPickFile = () => {
       const normalize = (s) =>

@@ -1,19 +1,10 @@
-/**
- * Sidebar
- *
- * Левое навигационное меню приложения.
- *
- */
 
 import { ROOT_SIDEBAR } from '../../constants/root.js';
 import { HistoryPage } from '../HistoryPage/HistoryPage.js';
 
 class Sidebar {
   constructor() {
-    /**
-     * CSS-класс закрытого состояния сайдбара
-     * (используется для hover-анимации)
-     */
+
     this.classNameActive = 'sidebar--close';
 
     /**
@@ -32,16 +23,7 @@ class Sidebar {
     });
   }
 
-  /**
-   * Отрисовка HTML-разметки сайдбара
-   *
-   * Содержит:
-   * - логотип приложения
-   * - пункты навигации
-   * - переключатель темы
-   * - иконку профиля
-   *
-   */
+
   render() {
     const html = `
       <nav class="navbar">
@@ -129,14 +111,7 @@ class Sidebar {
     this.#initNavigation();
   }
 
-  /**
-   * Переключение темы (light / dark)
-   *
-   * Реализовано полностью на фронтенде:
-   * - состояние хранится в localStorage
-   * - backend не участвует
-   *
-   */
+
   #initThemeToggle() {
     const toggleBtn = document.getElementById('themeToggle');
     const icon = document.getElementById('themeIcon');
@@ -194,11 +169,7 @@ class Sidebar {
   }
 }
 
-/**
- * Singleton-экземпляр Sidebar
- *
- * Sidebar создаётся один раз при старте приложения
- */
+
 const sidebarElement = new Sidebar();
 sidebarElement.render();
 

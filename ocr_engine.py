@@ -1,15 +1,43 @@
 from dataclasses import dataclass
-from PIL import Image
+from PIL import Image, ImageFilter, ImageOps
 import pytesseract
+import cv2
+from enum import Enum
 
 
-# -------------------------------
-# Нормализованный bbox в долях страницы (0..1)
-# -------------------------------
-# Используется для:
-# - независимости от DPI
-# - одинаковой геометрии для preview и hi-res изображений
-# - сериализации/передачи между фронтом и бэком
+def preprocess_for_ocr(img: Image.Image) -> Image.Image:
+
+    cv_img = cv2.cvtColor(
+        np.array(img),
+        cv2.COLOR_RGB2BGR
+    )
+
+    gray = cv2.cvtColor(
+        cv_img,
+        cv2.COLOR_BGR2GRAY
+    )
+
+    gray = cv2.resize(
+        gray,
+        None,
+        fx=2,
+        fy=2,
+        interpolation=cv2.INTER_CUBIC
+    )
+
+    gray = cv2.medianBlur(gray, 3)
+
+    bw = cv2.adaptiveThreshold(
+        gray,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        31,
+        15
+    )
+
+    return Image.fromarray(bw)
+
 #@dataclass(frozen=True)
 class BBox01:
     x: float    # левая граница (0..1) относительно ширины изображения
@@ -18,33 +46,7 @@ class BBox01:
     height: float  # нижняя граница (0..1)
 
 
-# -------------------------------
-# Проверка корректности bbox
-# -------------------------------
-# Гарантирует:
-# - все координаты в диапазоне [0,1]
-# - bbox имеет положительную площадь
-# - bbox корректен геометрически
-# def bbox01_is_valid(b: BBox01) -> bool:
-#     return (
-#         0 <= b.left < b.right <= 1 and
-#         0 <= b.top < b.bottom <= 1
-#     )
 
-
-# -------------------------------
-# Кроп изображения по нормализованному bbox
-# -------------------------------
-# Вход:
-# - img: PIL.Image (обычно hi-res страница PDF)
-# - b: bbox в процентах (0..1)
-#
-# Выход:
-# - PIL.Image с вырезанным фрагментом
-#
-# Здесь происходит:
-# - перевод процентов → пиксели
-# - защита от слишком маленьких областей
 def crop_by_bbox01(img: Image.Image, b: BBox01) -> Image.Image:
     W, H = img.size
     print(W, H)
@@ -68,18 +70,7 @@ def crop_by_bbox01(img: Image.Image, b: BBox01) -> Image.Image:
     return img.crop((x0, y0, x1, y1))
 
 
-# -------------------------------
-# OCR одного кропа (PIL.Image)
-# -------------------------------
-# Это "чистая" OCR-функция:
-# - не знает, откуда картинка
-# - не знает, таблица это или нет
-# - просто читает текст
-#
-# Параметры:
-# - lang: языковые модели Tesseract
-# - psm: режим сегментации страницы
-# - oem: OCR-движок (3 = авто)
+
 def ocr_pil_image(
     crop: Image.Image,
     lang: str = "rus+eng",
@@ -98,19 +89,7 @@ def ocr_pil_image(
     )
 
 
-# -------------------------------
-# Полный пайплайн OCR по bbox01
-# -------------------------------
-# Вход:
-# - img: PIL.Image (hi-res страница)
-# - b: BBox01 (нормализованный bbox)
-#
-# Это "склеивающая" функция:
-# - валидирует bbox
-# - кропает изображение
-# - запускает OCR
-#
-# Вся логика OCR сосредоточена тут
+
 def ocr_on_image_with_bbox01(
     img: Image.Image,
     b: BBox01,
@@ -125,28 +104,22 @@ def ocr_on_image_with_bbox01(
 
     # Кроп изображения
     crop = crop_by_bbox01(img, b)
-
+    prcrop = preprocess_for_ocr(crop)
     # OCR кропа
     return ocr_pil_image(
-        crop,
+        prcrop,
         lang=lang,
         psm=psm,
         oem=oem
     )
 
-# ============================================================
-# Примеры использования модуля OCR (для понимания и тестов)
-# ============================================================
+
 
 if __name__ == "__main__":
-    # --------------------------------------------
-    # Пример 1: OCR по bbox (основной сценарий)
-    # --------------------------------------------
 
     # Загружаем hi-res изображение страницы PDF
     img = Image.open("example_page_ocr.png").convert("RGB")
 
-    # Нормализованный bbox (например, ячейка таблицы)
     bbox = BBox01(
         left=0.12,
         right=0.45,
@@ -174,9 +147,6 @@ if __name__ == "__main__":
         print("Ошибка bbox:", e)
 
 
-    # --------------------------------------------
-    # Пример 2: OCR по уже вырезанному кропу
-    # --------------------------------------------
 
     # Кропаем вручную (например, если bbox уже применён где-то ещё)
     crop = crop_by_bbox01(img, bbox)
@@ -191,11 +161,6 @@ if __name__ == "__main__":
     print(text2)
 
 
-    # --------------------------------------------
-    # Пример 3: OCR одной строки / значения
-    # --------------------------------------------
-
-    # Для одиночных значений (числа, код, ИНН и т.п.)
     text3 = ocr_pil_image(
         crop,
         lang="eng",
@@ -206,9 +171,7 @@ if __name__ == "__main__":
     print(text3)
 
 
-    # --------------------------------------------
-    # Пример 4: Проверка bbox без OCR
-    # --------------------------------------------
+
 
     bad_bbox = BBox01(left=0.5, right=0.4, top=0.1, bottom=0.2)
 
@@ -216,11 +179,7 @@ if __name__ == "__main__":
         print("BBox некорректен, OCR не запускаем")
 
 
-    # --------------------------------------------
-    # Пример 5: Минимальный “чистый” вызов OCR
-    # --------------------------------------------
 
-    # Когда геометрия уже обработана где-то выше
     text4 = pytesseract.image_to_string(
         crop,
         lang="rus+eng",

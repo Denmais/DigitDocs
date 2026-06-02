@@ -1,7 +1,4 @@
-/**
- * Excel-safe export: UTF-16LE + BOM
- * (Excel almost always detects it correctly on Windows)
- */
+
 
 console.log('ResultTable loaded');
 

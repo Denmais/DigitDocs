@@ -1,35 +1,16 @@
-/**
- * Statusbar
- *
- * Компонент верхней панели шагов (stepper).
- *
- * Отвечает ТОЛЬКО за отображение:
- * - текущего шага
- * - выполненных шагов
- * - информации о загруженном файле и выбранной категории
- *
- */
 
 import { ROOT_STATUSBAR } from '../../constants/root.js';
 import { createStorageObserver } from '../../utils/storageObserver.js';
 
 class Statusbar {
   constructor() {
-    /**
-     * storageObserver - обёртка над localStorage.setItem
-     *
-     * Позволяет подписываться на изменения localStorage,
-     * как на события (без Redux / framework)
-     */
+
     this.storageObserver = createStorageObserver();
 
     // Подписка на изменения данных
     this.initObserver();
 
-    /**
-     * isHidden - состояние шапки с метаданными документа
-     * (используется на этапе crop / выбора данных)
-     */
+
     this.isHidden = true;
   }
 
@@ -47,10 +28,7 @@ class Statusbar {
     });
   }
 
-  /**
-   * Скрывает информационную плашку
-   * (используется при выборе фрагментов PDF)
-   */
+
   hide() {
     const header = document.querySelector('.data-selection__header');
     if (header) {
@@ -70,12 +48,7 @@ class Statusbar {
     }
   }
 
-  /**
-   * Основной render Statusbar
-   *
-   * Здесь НЕТ логики шагов -
-   * только чтение текущего состояния
-   */
+
   render() {
     /**
      * Метаданные документа
@@ -89,13 +62,7 @@ class Statusbar {
 
     const hiddenClass = this.isHidden ? 'hidden' : '';
 
-    /**
-     * activeStep
-     *
-     * Хранится в localStorage и CSS-переменной
-     * Обновляется через utils/stepManager.js
-     *
-     */
+ 
     const activeStep =
       Number(localStorage.getItem('activeStep')) || 1;
 
@@ -106,13 +73,7 @@ class Statusbar {
      */
     const isActive = (step) => step <= activeStep;
 
-    /**
-     * HTML-разметка statusbar
-     *
-     * statusbar--step-X:
-     * - CSS-хук для изменения отступов / анимаций
-     * - например, margin-top для шагов 3–5
-     */
+
     const html = `
       <div class="data-selection__header ${hiddenClass}">
         <span class="data-selection__title">
@@ -146,16 +107,11 @@ class Statusbar {
       </ul>
     `;
 
-    // Перерисовываем statusbar целиком
     ROOT_STATUSBAR.innerHTML = html;
   }
 }
 
-/**
- * Singleton-экземпляр statusbar
- *
- * Используется во всём приложении
- */
+
 const statusbarElement = new Statusbar();
 statusbarElement.render();
 
