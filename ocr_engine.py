@@ -6,34 +6,45 @@ from enum import Enum
 
 
 def preprocess_for_ocr(img: Image.Image) -> Image.Image:
-
-    cv_img = cv2.cvtColor(
-        np.array(img),
-        cv2.COLOR_RGB2BGR
-    )
-
+    # PIL -> OpenCV
     gray = cv2.cvtColor(
-        cv_img,
-        cv2.COLOR_BGR2GRAY
+        np.array(img),
+        cv2.COLOR_RGB2GRAY
     )
 
     gray = cv2.resize(
         gray,
         None,
-        fx=2,
-        fy=2,
+        fx=3,
+        fy=3,
         interpolation=cv2.INTER_CUBIC
     )
 
-    gray = cv2.medianBlur(gray, 3)
+    clahe = cv2.createCLAHE(
+        clipLimit=3.0,
+        tileGridSize=(8, 8)
+    )
+    gray = clahe.apply(gray)
+
+    background = cv2.GaussianBlur(gray, (0, 0), 25)
+    norm = cv2.divide(gray, background, scale=255)
+
+    norm = cv2.bilateralFilter(norm, 7, 50, 50)
 
     bw = cv2.adaptiveThreshold(
-        gray,
+        norm,
         255,
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY,
-        31,
-        15
+        41,
+        11
+    )
+
+    kernel = np.ones((2, 2), np.uint8)
+    bw = cv2.morphologyEx(
+        bw,
+        cv2.MORPH_CLOSE,
+        kernel
     )
 
     return Image.fromarray(bw)
