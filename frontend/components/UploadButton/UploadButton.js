@@ -3,9 +3,6 @@ import { API_CONFIG } from '../../constants/api.js';
 
 export class UploadButton {
   constructor({ rootId }) {
-    /**
-     * rootEl - DOM-контейнер upload-зоны
-     */
     this.rootEl = document.getElementById(rootId);
 
 
@@ -50,9 +47,6 @@ export class UploadButton {
     if (savedTitle) this.selectedCategoryTitle = savedTitle;
   }
 
-  /**
-   * Рендер UI upload-зоны
-   */
   render() {
     const html = `
       <p class="upload-zone__text">
@@ -204,11 +198,7 @@ export class UploadButton {
     this.button.disabled = false;
   }
 }
-  /**
-   *
-   * POST /upload
-   *
-   */
+
    async #uploadToServer(file, typeTitle) {
     const formData = new FormData();
     formData.append('type_id', typeTitle);

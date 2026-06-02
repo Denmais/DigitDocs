@@ -1,17 +1,3 @@
-/**
- * viewerState
- *
- * Глобальное состояние PDF-вьюера.
- *
- * Используется несколькими компонентами:
- * - Actionbar
- * - PdfCrop
- * - Viewer controls (zoom, scroll)
- *
- * Backend к этому файлу НЕ ПРИВЯЗАН.
- * Это ЧИСТО frontend-состояние.
- */
-
 export const viewerState = {
   pages: [],
   pageIndex: 0,

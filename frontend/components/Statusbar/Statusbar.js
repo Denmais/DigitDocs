@@ -14,10 +14,7 @@ class Statusbar {
     this.isHidden = true;
   }
 
-  /**
-   * Подписка на ключевые события localStorage
-   *
-   */
+
   initObserver() {
     this.storageObserver.on('uploadedFile', () => {
       this.render();
@@ -37,9 +34,7 @@ class Statusbar {
     }
   }
 
-  /**
-   * Показывает информационную плашку
-   */
+
   show() {
     const header = document.querySelector('.data-selection__header');
     if (header) {
@@ -50,10 +45,7 @@ class Statusbar {
 
 
   render() {
-    /**
-     * Метаданные документа
-     *
-     */
+
     const fileName =
       localStorage.getItem('uploadedFile') || 'Ваш документ';
 
@@ -66,11 +58,7 @@ class Statusbar {
     const activeStep =
       Number(localStorage.getItem('activeStep')) || 1;
 
-    /**
-     * Функция:
-     * шаг считается активным, если он <= текущего
-     * (все выполненные шаги подсвечены)
-     */
+
     const isActive = (step) => step <= activeStep;
 
 

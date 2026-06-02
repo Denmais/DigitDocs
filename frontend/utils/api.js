@@ -1,13 +1,3 @@
-/**
- * ApiService
- *
- *
- * Этот файл предназначен:
- * - для будущего подключения реального backend
- * - для централизованного управления API-вызовами
- *
- */
-
 import { API_CONFIG } from '../constants/api.js';
 
 export class ApiService {

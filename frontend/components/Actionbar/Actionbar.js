@@ -45,17 +45,11 @@ class Actionbar {
 
     ROOT_ACTIONBAR.innerHTML = html;
 
-    // Инициализация селекта типа документа
     this.renderSelect();
 
-    // Инициализация загрузки PDF
     const uploadBtn = new UploadButton({ rootId: 'uploadZone' });
     uploadBtn.render();
 
-    /**
-     * Popup обработки документа.
-     *
-     */
     const popup = new PopUp();
     const popupButton = document.querySelector('#processBtn');
     popupButton.addEventListener('click', (e) => {
@@ -65,12 +59,7 @@ class Actionbar {
     });
   }
 
-  /**
-   * renderSelect()
-   *
-   * Загружает список типов документов (mock JSON).
-   *
-   */
+
   async renderSelect() {
     const res = await fetch('/api/document-types');
     const types = await res.json(); // [{id, title}]
@@ -97,15 +86,7 @@ class Actionbar {
   }
 
 
-  /**
-   * #handleFieldCrop()
-   *
-   * Пользователь выбрал поле и нажал "выделить на документе".
-   *
-   * Здесь:
-   * - сохраняем активное поле (fieldId)
-   * - включаем визуальный режим crop
-   */
+
   async #handleFieldCrop({ fieldId }) {
     const { cancelCrop } = await import('../../utils/cropManager.js');
     cancelCrop(); // сброс состояния предыдущего crop (если был)
@@ -132,11 +113,7 @@ class Actionbar {
     viewerState.pageIndex = 0;
     viewerState.zoom = 1;
 
-    /**
-     * Экран "Выбор данных":
-     * - форма полей слева
-     * - PDF-просмотр справа
-     */
+
     const newHtml = `
       <div class="data-selection">
         <div class="data-selection__layout">
@@ -189,10 +166,7 @@ class Actionbar {
     this.#renderTariffSelects(processData.fields);
     showCropTourOnce();
 
-    /**
-     * Событие cropSelected
-     *
-     */
+
     document.addEventListener('cropSelected', async (e) => {
       const { fieldId, page, crop } = e.detail;
 
@@ -286,12 +260,7 @@ class Actionbar {
       }
     });
 
-    /**
-     * Кнопка "Сформировать таблицу"
-     *
-     * Backend:
-     * POST /api/collect
-     */
+
     const submitBtn = document.querySelector('.data-selection__submit');
 
     submitBtn.addEventListener('click', async () => {
@@ -323,9 +292,7 @@ class Actionbar {
     this.#initViewer();
   }
 
-  /**
-   * Рендер списка полей (форма слева)
-   */
+
   async #renderTariffSelects(fields) {
     const input = new CustomInput({
       rootId: 'categories',
@@ -336,13 +303,7 @@ class Actionbar {
     input.render();
   }
 
-  /**
-   * Инициализация PDF viewer:
-   * - fit-height на 100%
-   * - масштабирование
-   * - переключение страниц
-   * - ctrl + wheel
-   */
+
   #initViewer() {
     const canvas = document.querySelector('.viewer__canvas');
     const mainImg = document.querySelector('.viewer__page');
@@ -397,10 +358,9 @@ class Actionbar {
       applyTransform();
     };
 
-    // --- initial render ---
     renderPage();
 
-    /* === Thumbnails === */
+
     const thumbs = document.querySelectorAll('.viewer__thumb');
     if (thumbs.length > 0) thumbs[0].classList.add('active');
 
@@ -436,7 +396,6 @@ class Actionbar {
 
     document.querySelector('.viewer__reset').onclick = resetView;
 
-    /* === Ctrl + Wheel (как в PDF) === */
     canvas.addEventListener(
       'wheel',
       (e) => {
@@ -479,9 +438,7 @@ class Actionbar {
   }
 
 
-  /**
-   * Экран результата
-   */
+
   #showResultTable(result) {
     nextStep();
 
@@ -493,9 +450,7 @@ class Actionbar {
     renderResultTable(wrapper, result);
   }
 
-  /**
-   * Генерация CSV (frontend-only)
-   */
+
   #downloadCSV(table) {
     const rows = [
       ['Параметр', 'Значение'],
@@ -511,10 +466,7 @@ class Actionbar {
     link.click();
   }
 
-  /**
-   * Публикация результата в BI
-   *
-   */
+
   async #publishToBI(resultId) {
     PopUp.showProcessing();
 

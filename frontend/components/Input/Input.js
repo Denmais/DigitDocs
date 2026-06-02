@@ -1,38 +1,21 @@
 
 
 export class CustomInput {
-  /**
-   * @param {string} rootId - id контейнера для формы
-   * @param {Array} data - список полей, полученных от backend
-   */
+
   constructor({ rootId, data = [] }) {
     this.rootEl = document.getElementById(rootId);
     this.data = data;
   }
 
-  /**
-   * render()
-   *
-   * Отрисовывает все поля формы на основе данных backend.
-   * Также подписывается на события crop.
-   */
+
   render() {
-    /**
-     * Генерация HTML всех полей
-     */
+
     this.rootEl.innerHTML = this.data
       .map((field) => this.#renderField(field))
       .join('');
 
-    /**
-     * Навешиваем обработчики на кнопки "выбрать фрагмент"
-     */
     this.#bindActions();
 
-    /**
-     * Событие: режим crop включён
-     * → подсвечиваем активное поле
-     */
     document.addEventListener('cropModeEnabled', (e) => {
       this.#highlightField(e.detail.fieldId);
     });
@@ -61,10 +44,6 @@ export class CustomInput {
 
       const fieldId = field.dataset.fieldId;
 
-      /**
-       * Глобальное событие:
-       * Actionbar его перехватывает и запускает PdfCrop
-       */
       document.dispatchEvent(
         new CustomEvent('fieldCropStart', {
           detail: { fieldId },

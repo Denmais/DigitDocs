@@ -21,7 +21,6 @@ function escapeTsvCell(value) {
 }
 
 function buildTsvString(tableRows) {
-  // "sep=\t" helps Excel understand separator when it imports weirdly
   const header = ['Параметр', 'Значение'];
 
   const lines = [
@@ -38,7 +37,6 @@ function buildTsvString(tableRows) {
 }
 
 function encodeUtf16LEWithBom(str) {
-  // IMPORTANT: UTF-16LE BOM = FF FE
   const out = new Uint8Array(2 + str.length * 2);
   out[0] = 0xff;
   out[1] = 0xfe;
@@ -70,9 +68,7 @@ function downloadExcelFile({ filename, contentUtf16leBytes }) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-/**
- * renderResultTable
- */
+
 export function renderResultTable(container, data) {
   console.log('renderResultTable called', data);
 

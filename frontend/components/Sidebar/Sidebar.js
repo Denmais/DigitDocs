@@ -7,17 +7,12 @@ class Sidebar {
 
     this.classNameActive = 'sidebar--close';
 
-    /**
-     * Открытие сайдбара при наведении курсора
-     *
-     */
+
     ROOT_SIDEBAR.addEventListener('mouseover', () => {
       ROOT_SIDEBAR.classList.remove(this.classNameActive);
     });
 
-    /**
-     * Закрытие сайдбара при уходе курсора
-     */
+
     ROOT_SIDEBAR.addEventListener('mouseleave', () => {
       ROOT_SIDEBAR.classList.add(this.classNameActive);
     });
@@ -116,10 +111,7 @@ class Sidebar {
     const toggleBtn = document.getElementById('themeToggle');
     const icon = document.getElementById('themeIcon');
 
-    /**
-     * Читаем сохранённую тему
-     * (по умолчанию - light)
-     */
+
     const savedTheme = localStorage.getItem('theme') || 'light';
 
     // Применяем тему к <html>
@@ -131,9 +123,7 @@ class Sidebar {
         ? './data/images/sun.svg'
         : './data/images/moon.svg';
 
-    /**
-     * Обработчик клика по кнопке темы
-     */
+
     toggleBtn.addEventListener('click', () => {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'light' ? 'dark' : 'light';

@@ -1,14 +1,11 @@
 const TOUR_KEY = 'crop_tour_seen_v1';
 
 export function showCropTourOnce() {
-  // уже показывали
   if (localStorage.getItem(TOUR_KEY) === '1') return;
 
-  // ищем первую кнопку ⛶
   const btn = document.querySelector('.tariff-field__action');
   if (!btn) return;
 
-  // помечаем как показанный сразу, чтобы не повторять при перерендерах
   localStorage.setItem(TOUR_KEY, '1');
 
   btn.classList.add('tour-pulse');

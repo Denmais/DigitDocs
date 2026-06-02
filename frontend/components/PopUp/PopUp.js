@@ -95,11 +95,7 @@ export class PopUp {
     document.body.insertAdjacentHTML('beforeend', html);
   }
 
-  /**
-   * close()
-   *
-   * Закрывает popup обработки фрагмента
-   */
+
   static close() {
     document.getElementById('extractPopup')?.remove();
   }
@@ -118,7 +114,6 @@ async function startProcessReal(uploadId) {
 
   const data = await response.json();
 
-  // ✅ нормализуем под Actionbar (он ждёт image_url)
   const normalized = {
     ...data,
     pages: (data.pages || []).map((p) => ({
@@ -127,7 +122,6 @@ async function startProcessReal(uploadId) {
     })),
   };
 
-  // сохраняем как раньше (чтобы остальной фронт не ломался)
   localStorage.setItem('processTask', JSON.stringify(normalized));
   localStorage.setItem('task_id', normalized.task_id);
 

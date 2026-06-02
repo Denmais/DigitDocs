@@ -1,30 +1,14 @@
-/**
- * Observer над localStorage.
- *
- * Позволяет реагировать на изменения данных
- * без Redux / EventBus / Framework.
- *
- * Используется для:
- * - обновления statusbar
- * - обновления заголовков
- * - синхронизации UI между компонентами
- *
- */
-
 export function createStorageObserver() {
   const originalSetItem = localStorage.setItem;
   const callbacks = {};
 
-  // Переопределяем localStorage.setItem
   localStorage.setItem = function (key, value) {
     originalSetItem.call(this, key, value);
 
-    // Коллбэки для конкретного ключа
     if (callbacks[key]) {
       callbacks[key].forEach((callback) => callback(value));
     }
 
-    // Глобальные коллбэки
     if (callbacks['*']) {
       callbacks['*'].forEach((callback) => callback(key, value));
     }

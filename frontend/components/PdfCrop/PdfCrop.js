@@ -3,9 +3,7 @@
 import { cropState, cancelCrop } from '../../utils/cropManager.js';
 import { viewerState } from '../../services/viewerState.js';
 
-/**
- * DOM-элементы и состояния выделения
- */
+
 let overlay;   // Полупрозрачный overlay поверх PDF
 let rect;      // Прямоугольник выделения
 let startX = 0;
@@ -69,12 +67,7 @@ function onMouseDown(e) {
   document.addEventListener('mouseup', onMouseUp);
 }
 
-/**
- * onMouseMove
- *
- * Рисование прямоугольника выделения
- * в реальном времени
- */
+
 function onMouseMove(e) {
   const rectWrapper = wrapper.getBoundingClientRect();
   const scale = getRenderScale();
@@ -95,15 +88,7 @@ function onMouseMove(e) {
   });
 }
 
-/**
- * onMouseUp
- *
- * Завершение выделения:
- * - формируем объект crop
- * - отправляем событие cropSelected
- * - выходим из режима кадрирования
- *
- */
+
 function onMouseUp() {
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
