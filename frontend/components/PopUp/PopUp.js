@@ -1,5 +1,3 @@
-
-
 import { ROOT_ACTIONBAR } from '../../constants/root.js';
 import { previousStep, nextStep } from '../../utils/stepManager.js';
 import { API_CONFIG } from '../../constants/api.js';
@@ -33,7 +31,6 @@ export class PopUp {
       </div>
     `;
 
-    // Вставляем popup поверх Actionbar
     ROOT_ACTIONBAR.insertAdjacentHTML('beforeend', html);
 
 

@@ -1,8 +1,8 @@
 
 export const cropState = {
-  active: false,   // включён ли режим выделения
-  fieldId: null,   // поле, для которого делается crop
-  page: 1,         // номер страницы PDF
+  active: false,
+  fieldId: null,
+  page: 1,
 };
 
 

@@ -1,5 +1,4 @@
 export function nextStep() {
-  // Все шаги
   const statusItems = document.querySelectorAll('.statusbar__item');
 
   const activeItems = document.querySelectorAll('.statusbar__item--active');

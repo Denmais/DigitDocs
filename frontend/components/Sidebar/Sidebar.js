@@ -1,4 +1,3 @@
-
 import { ROOT_SIDEBAR } from '../../constants/root.js';
 import { HistoryPage } from '../HistoryPage/HistoryPage.js';
 
@@ -97,10 +96,7 @@ class Sidebar {
       </nav>
     `;
 
-    // Вставляем сайдбар в DOM
     ROOT_SIDEBAR.innerHTML = html;
-
-    // Инициализация логики темы
     this.#initThemeToggle();
 
     this.#initNavigation();
@@ -114,10 +110,7 @@ class Sidebar {
 
     const savedTheme = localStorage.getItem('theme') || 'light';
 
-    // Применяем тему к <html>
     document.documentElement.setAttribute('data-theme', savedTheme);
-
-    // Меняем иконку
     icon.src =
       savedTheme === 'dark'
         ? './data/images/sun.svg'
@@ -144,15 +137,12 @@ class Sidebar {
     historyLink.addEventListener('click', (e) => {
       e.preventDefault();
 
-      // Убираем active у всех
       document.querySelectorAll('.navbar__item')
         .forEach(item => item.classList.remove('navbar__item--active'));
 
-      // Ставим active текущему
       historyLink.closest('.navbar__item')
         .classList.add('navbar__item--active');
 
-      // Рендерим страницу истории
       const page = new HistoryPage({ rootId: 'action-bar' });
       page.render();
     });

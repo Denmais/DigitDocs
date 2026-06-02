@@ -12,10 +12,8 @@ export class UploadButton {
     this.selectedCategoryId = null;
     this.selectedCategoryTitle = null;
 
-    // Подписка на события выбора категории
     this.setupCategoryListener();
 
-    // Если категория уже выбрана ранее - восстанавливаем
     this.checkSavedCategory();
   }
 
@@ -23,14 +21,12 @@ export class UploadButton {
   setupCategoryListener() {
     const selectRoot = document.getElementById('doc-type');
 
-    // событие selectChange диспатчится на #doc-type
     if (selectRoot) {
       selectRoot.addEventListener('selectChange', (e) => {
         if (e.detail?.id) {
           this.selectedCategoryId = e.detail.id;
           this.selectedCategoryTitle = e.detail.title;
 
-          // на всякий случай сразу синхроним localStorage
           localStorage.setItem('selectedCategoryId', e.detail.id);
           localStorage.setItem('selectedCategoryTitle', e.detail.title);
         }
@@ -100,7 +96,7 @@ export class UploadButton {
     });
 
     this.rootEl.addEventListener('dragover', (e) => {
-      if (!canPickFile()) return; // не даём даже “дроп-зону”
+      if (!canPickFile()) return;
       e.preventDefault();
       this.rootEl.classList.add('dragover');
     });
@@ -150,15 +146,11 @@ export class UploadButton {
     this.text.innerHTML = '⏳ Отправка файла...';
     this.button.disabled = true;
 
-    // 1) Берём текущее значение селекта из DOM (истина)
     const currentTitle = this.#getCurrentSelectTitle();
 
-    // placeholder должен совпадать с CustomSelect
     const PLACEHOLDER = 'выберите категорию';
 
-    // 2) Если в UI placeholder - значит реально НЕ выбрано
     if (!currentTitle || currentTitle === PLACEHOLDER) {
-      // сбросим старое, чтобы больше не подтягивалось "из прошлого"
       localStorage.removeItem('selectedCategoryId');
       localStorage.removeItem('selectedCategoryTitle');
       this.selectedCategoryId = null;
@@ -167,7 +159,6 @@ export class UploadButton {
       throw new Error('Сначала выберите тип документа');
     }
 
-    // 3) Если UI не placeholder — синхроним состояние
     this.selectedCategoryTitle = currentTitle;
 
     if (file.type !== 'application/pdf') {
@@ -204,12 +195,10 @@ export class UploadButton {
     formData.append('type_id', typeTitle);
     formData.append('file', file);
 
-    // Логи для бэкенда
     console.log('[UPLOAD] url:', `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`);
     console.log('[UPLOAD] type_id:', typeTitle);
     console.log('[UPLOAD] file:', { name: file.name, size: file.size, type: file.type });
 
-    // Важно: так можно увидеть реальные пары form-data
     for (const [k, v] of formData.entries()) {
       if (v instanceof File) {
         console.log(`[UPLOAD] formData ${k}: File(name=${v.name}, size=${v.size}, type=${v.type})`);

@@ -1,4 +1,3 @@
-
 export class CustomSelect {
   constructor({
     rootId,

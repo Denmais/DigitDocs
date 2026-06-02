@@ -1,14 +1,12 @@
-
-
 import { cropState, cancelCrop } from '../../utils/cropManager.js';
 import { viewerState } from '../../services/viewerState.js';
 
 
-let overlay;   // Полупрозрачный overlay поверх PDF
-let rect;      // Прямоугольник выделения
+let overlay;
+let rect;
 let startX = 0;
 let startY = 0;
-let wrapper;   // Обёртка страницы PDF (учитывает zoom)
+let wrapper;
 let isActive = false;
 
 
@@ -16,7 +14,6 @@ export function enableCropMode() {
   const canvas = document.querySelector('.viewer__canvas');
   if (!canvas) return;
 
-  // если режим уже был включён — убираем старый overlay и слушатели
   cleanup();
 
   wrapper = canvas.querySelector('.viewer__page-wrapper');
@@ -41,8 +38,6 @@ export function enableCropMode() {
   wrapper.addEventListener('mousedown', onMouseDown);
   document.addEventListener('keydown', onKeyDown);
 
-  // (опционально) чтобы другие части UI знали что crop активен
-  // cropState.active = true;
 }
 
 
@@ -93,7 +88,6 @@ function onMouseUp() {
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
 
-  // crop в координатах wrapper (DOM, "как рисовали")
   const domCrop = {
     x: rect.offsetLeft,
     y: rect.offsetTop,
@@ -101,14 +95,12 @@ function onMouseUp() {
     height: rect.offsetHeight,
   };
 
-  // защита от клика без выделения
   if (domCrop.width < 3 || domCrop.height < 3) {
     cleanup();
     cancelCrop();
     return;
   }
 
-  // переводим DOM → координаты реального изображения
   const { crop01, cropPx } = domCropToImageCrop(domCrop);
 
   document.dispatchEvent(
@@ -116,9 +108,7 @@ function onMouseUp() {
       detail: {
         fieldId: cropState.fieldId,
         page: cropState.page,
-        // выбери что отправлять:
         crop: crop01,   // 0..1
-        // crop: cropPx, // пиксели PNG
       },
     })
   );
@@ -126,7 +116,6 @@ function onMouseUp() {
   cleanup();
 }
 
-// DOM → IMAGE crop (и в px, и в 0..1)
 function domCropToImageCrop(domCrop) {
   const img = document.querySelector('.viewer__page');
   if (!img) return { crop01: domCrop, cropPx: domCrop };
@@ -166,15 +155,12 @@ function getRenderScale() {
 
 
 function cleanup() {
-  // снять глобальные слушатели, если они висели
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
   document.removeEventListener('keydown', onKeyDown);
 
-  // снять mousedown с предыдущего wrapper
   if (wrapper) wrapper.removeEventListener('mousedown', onMouseDown);
 
-  // убрать overlay
   if (overlay) overlay.remove();
 
   overlay = null;

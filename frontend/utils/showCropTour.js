@@ -60,7 +60,6 @@ export function showCropTourOnce() {
     pop.style.top = `${top}px`;
     };
 
-    // delay layout
     requestAnimationFrame(() => {
     requestAnimationFrame(() => {
         setTimeout(place, 200);
@@ -69,7 +68,7 @@ export function showCropTourOnce() {
 
 
     (async () => {
-    await document.fonts?.ready; // если поддерживается
+    await document.fonts?.ready;
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     setTimeout(place, 200);
     })();
@@ -88,7 +87,6 @@ export function showCropTourOnce() {
     if (e.key === 'Escape') cleanup();
   };
 
-  // закрытие
   dim.addEventListener('click', cleanup);
   pop.querySelector('[data-tour-ok]')?.addEventListener('click', cleanup);
   pop.querySelector('[data-tour-skip]')?.addEventListener('click', cleanup);

@@ -6,8 +6,6 @@ class Statusbar {
   constructor() {
 
     this.storageObserver = createStorageObserver();
-
-    // Подписка на изменения данных
     this.initObserver();
 
 

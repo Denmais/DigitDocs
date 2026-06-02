@@ -1,18 +1,13 @@
-
-
 console.log('ResultTable loaded');
 
 function escapeTsvCell(value) {
   if (value == null) return '';
   let s = String(value);
 
-  // normalize line breaks
   s = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-  // tabs break columns in TSV -> replace
   s = s.replace(/\t/g, ' ');
 
-  // quote if needed
   if (s.includes('"') || s.includes('\n')) {
     s = `"${s.replace(/"/g, '""')}"`;
   }
@@ -33,7 +28,7 @@ function buildTsvString(tableRows) {
     }),
   ];
 
-  return lines.join('\r\n'); // Excel likes CRLF
+  return lines.join('\r\n');
 }
 
 function encodeUtf16LEWithBom(str) {
@@ -64,7 +59,6 @@ function downloadExcelFile({ filename, contentUtf16leBytes }) {
   a.click();
   a.remove();
 
-  // revoke after click
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
@@ -113,7 +107,6 @@ export function renderResultTable(container, data) {
   if (btn) {
     btn.onclick = async () => {
       try {
-        // Берём task_id из localStorage
         const taskId = localStorage.getItem('task_id');
         if (!taskId) throw new Error('task_id не найден в localStorage');
 

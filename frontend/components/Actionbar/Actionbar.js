@@ -53,7 +53,7 @@ class Actionbar {
     const popup = new PopUp();
     const popupButton = document.querySelector('#processBtn');
     popupButton.addEventListener('click', (e) => {
-      nextStep(); // шаг "Обработка документа"
+      nextStep(); 
       e.preventDefault();
       popup.render();
     });
@@ -62,9 +62,8 @@ class Actionbar {
 
   async renderSelect() {
     const res = await fetch('/api/document-types');
-    const types = await res.json(); // [{id, title}]
+    const types = await res.json();
 
-    // Приводим к формату CustomSelect
     const data = types.map(t => ({
       id: t.id,
       title: t.title,
@@ -89,7 +88,7 @@ class Actionbar {
 
   async #handleFieldCrop({ fieldId }) {
     const { cancelCrop } = await import('../../utils/cropManager.js');
-    cancelCrop(); // сброс состояния предыдущего crop (если был)
+    cancelCrop();
 
     startCrop(fieldId);
 
@@ -104,11 +103,8 @@ class Actionbar {
 
   updateToDataSelectionUI(processData) {
     ROOT_ACTIONBAR.classList.remove('actions');
-
-    // Сохраняем данные обработки для дальнейших API-запросов
     localStorage.setItem('processResult', JSON.stringify(processData));
 
-    // Инициализация viewerState
     viewerState.pages = processData.pages;
     viewerState.pageIndex = 0;
     viewerState.zoom = 1;
@@ -160,7 +156,6 @@ class Actionbar {
 
     ROOT_ACTIONBAR.innerHTML = newHtml;
 
-    // Рендер формы полей
     this.#renderTariffSelects(processData.fields);
 
     this.#renderTariffSelects(processData.fields);
@@ -218,34 +213,21 @@ class Actionbar {
         let v = String(value).trim();
 
         if (inputType === 'number') {
-          // 1) оставляем только цифры, минус, точку, запятую, пробелы
           v = v.replace(/[^\d.,\s-]/g, '');
-
-          // 2) убираем пробелы внутри числа: "31 409" -> "31409"
           v = v.replace(/\s+/g, '');
-
-          // 3) если запятая как десятичный разделитель — заменим на точку
-          //    "12,34" -> "12.34"
           if (v.includes(',') && !v.includes('.')) v = v.replace(',', '.');
 
-          // 4) оставляем только один минус и только в начале
           v = v.replace(/(?!^)-/g, '');
 
-          // 5) оставляем только одну точку
           const firstDot = v.indexOf('.');
           if (firstDot !== -1) {
             v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
           }
-
-          // 6) убираем ведущую точку: ".5" -> "0.5"
           if (v.startsWith('.')) v = '0' + v;
           if (v.startsWith('-.')) v = v.replace('-.', '-0.');
 
-          // 7) убираем хвостовую точку: "31409." -> "31409"
           v = v.replace(/\.$/, '');
 
-          // 8) финальная проверка — должно быть валидным числом для input[type=number]
-          //    (без экспоненты, без пустых частей)
           if (!/^[-]?\d+(\.\d+)?$/.test(v)) return '';
         }
 
@@ -288,7 +270,6 @@ class Actionbar {
       this.#showResultTable(res);
     });
 
-    // Инициализация PDF viewer
     this.#initViewer();
   }
 
@@ -313,8 +294,8 @@ class Actionbar {
     if (!canvas || !mainImg || !zoomLabel || !wrapper) return;
 
     // --- state ---
-    viewerState.zoom = 1;        // 1 = "100%" (то есть fit-height)
-    viewerState.baseScale = 1;   // вычислим после загрузки картинки
+    viewerState.zoom = 1;
+    viewerState.baseScale = 1;
 
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 
@@ -334,7 +315,6 @@ class Actionbar {
     };
 
     const recalcBaseScaleFitHeight = () => {
-      // fit-height: высота картинки должна стать равной высоте canvas
       const canvasH = canvas.clientHeight || 1;
       const imgH = mainImg.naturalHeight || 1;
       viewerState.baseScale = canvasH / imgH;
@@ -344,7 +324,6 @@ class Actionbar {
       const page = viewerState.pages[viewerState.pageIndex];
       if (!page) return;
 
-      // важно: сначала назначаем onload, потом src
       mainImg.onload = () => {
         recalcBaseScaleFitHeight();
         applyTransform();
@@ -366,12 +345,9 @@ class Actionbar {
 
     document.querySelectorAll('.viewer__thumb').forEach((thumb) => {
       thumb.addEventListener('click', async () => {
-        // если был активный crop — просто выключаем (и визуально, и состояние)
         const { cancelCrop } = await import('../../utils/cropManager.js');
         disableCropMode();
         cancelCrop();
-
-        // дальше обычное переключение страницы
         viewerState.pageIndex = Number(thumb.dataset.index);
 
         document.querySelectorAll('.viewer__thumb')
@@ -383,7 +359,6 @@ class Actionbar {
       });
     });
 
-    /* === Buttons === */
     document.querySelector('[data-zoom="in"]').onclick = () => {
       viewerState.zoom = clamp(viewerState.zoom + 0.1, viewerState.minZoom || 0.2, viewerState.maxZoom || 5);
       applyTransform();
@@ -414,7 +389,6 @@ class Actionbar {
         if (nextZoom === prevZoom) return;
         viewerState.zoom = nextZoom;
 
-        // позиция курсора в координатах "контента" до зума
         const rect = canvas.getBoundingClientRect();
         const offsetX = (e.clientX - rect.left + canvas.scrollLeft) / prevScale;
         const offsetY = (e.clientY - rect.top + canvas.scrollTop) / prevScale;
@@ -423,14 +397,12 @@ class Actionbar {
 
         const newScale = viewerState.baseScale * viewerState.zoom;
 
-        // сохраняем точку под курсором
         canvas.scrollLeft = offsetX * newScale - (e.clientX - rect.left);
         canvas.scrollTop  = offsetY * newScale - (e.clientY - rect.top);
       },
       { passive: false }
     );
 
-    // (опционально) если меняется высота окна — пересчитать fit-height
     window.addEventListener('resize', () => {
       recalcBaseScaleFitHeight();
       applyTransform();

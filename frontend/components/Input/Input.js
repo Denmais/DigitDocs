@@ -1,5 +1,3 @@
-
-
 export class CustomInput {
 
   constructor({ rootId, data = [] }) {
@@ -34,11 +32,9 @@ export class CustomInput {
 
   #bindActions() {
     this.rootEl.addEventListener('click', (e) => {
-      // Ищем кнопку выбора фрагмента
       const btn = e.target.closest('.tariff-field__action');
       if (!btn) return;
 
-      // Определяем поле, к которому относится кнопка
       const field = btn.closest('.tariff-field');
       if (!field) return;
 
@@ -63,11 +59,6 @@ export class CustomInput {
     if (field) field.classList.add('tariff-field--active');
   }
 
-  /**
-   * #clearHighlight()
-   *
-   * Убирает подсветку со всех полей
-   */
   #clearHighlight() {
     this.rootEl
       .querySelectorAll('.tariff-field--active')

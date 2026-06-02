@@ -5,13 +5,9 @@ export class ApiService {
   static async uploadFile(file, typeId, comment = '') {
     const formData = new FormData();
 
-    // Тип документа (категория)
     formData.append('type_id', typeId);
 
-    // Сам PDF-файл
     formData.append('file', file);
-
-    // Необязательный комментарий
     if (comment) {
       formData.append('comment', comment);
     }
@@ -25,7 +21,6 @@ export class ApiService {
       }
     );
 
-    // Обработка ошибки HTTP
     if (!response.ok) {
       throw new Error(`Upload failed: ${response.status}`);
     }

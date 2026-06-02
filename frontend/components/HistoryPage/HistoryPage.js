@@ -5,7 +5,7 @@ export class HistoryPage {
   constructor({ rootId }) {
     this.rootEl = document.getElementById(rootId);
     this.statusElem = document.getElementById('statusbar');
-    this.isAllExpanded = false; // Состояние для глобальной кнопки
+    this.isAllExpanded = false;
   }
 
   async render() {
@@ -21,7 +21,6 @@ export class HistoryPage {
       if (!historyHeader) {
         historyHeader = document.createElement('div');
         historyHeader.className = 'history__header';
-        // Добавляем заголовок и кнопку управления всеми таблицами
         historyHeader.innerHTML = `
           <div class="history__header-left">
             <img src="./data/images/history.svg" class="history__header-icon">
@@ -98,7 +97,6 @@ export class HistoryPage {
       return;
     }
 
-    // Возвращаем иконки, дату и КНОПКУ ПЕРЕКЛЮЧАТЕЛЬ в шаблон
     container.innerHTML = items.map(item => `
       <div class="history-card">
         <div class="history-card__top">
@@ -168,12 +166,9 @@ export class HistoryPage {
     items.forEach(item => {
       const filename = item.name.split('/').pop();
       
-      // Предполагаем, что формат даты "DD.MM.YYYY HH:mm:ss" или ISO.
-      // Чтобы сгруппировать по минутам, убираем секунды из ключа.
-      // Если формат "12.05.2024 14:30:05", ключ станет "12.05.2024 14:30"
+
       const timeWithoutSeconds = item.timestamp.substring(0, 16); 
       
-      // Ключ теперь учитывает путь (имя файла) и время до минут
       const key = `${item.name}_${timeWithoutSeconds}`;
       
       if (!grouped[key]) {
@@ -181,19 +176,17 @@ export class HistoryPage {
           id: key,
           filename: filename,
           full_path: item.name,
-          created_at: timeWithoutSeconds, // Отображаем время без секунд
+          created_at: timeWithoutSeconds,
           result: []
         };
       }
       
-      // Добавляем параметр в общую таблицу
       grouped[key].result.push({
         label: item.field_name || `Параметр ${grouped[key].result.length + 1}`,
         value: item.value
       });
     });
 
-    // Возвращаем массив, отсортированный по времени (от новых к старым)
     return Object.values(grouped).sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
 }

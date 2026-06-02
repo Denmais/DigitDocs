@@ -15,7 +15,6 @@ export function createStorageObserver() {
   };
 
   return {
-    // Подписка на ключ
     on(key, callback) {
       if (!callbacks[key]) {
         callbacks[key] = [];
@@ -23,7 +22,6 @@ export function createStorageObserver() {
       callbacks[key].push(callback);
     },
 
-    // Отписка
     off(key, callback) {
       if (callbacks[key]) {
         const index = callbacks[key].indexOf(callback);
