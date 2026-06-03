@@ -11,7 +11,7 @@
 
 <VirtualHost *:443>
     # WSGIDaemonProcess api.rusefs.com user=apache group=apache threads=2
-    # WSGIScriptAlias / /data/api.rusefs.com/wsgi.py
+    # WSGIScriptAlias 
 
     ServerName ghjk-ljbn-mnbv-jgva.ispvds.com
     ServerAlias www.ghjk-ljbn-mnbv-jgva.ispvds.com
