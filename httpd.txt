@@ -4,17 +4,11 @@
 #LoadModule wsgi_module "/usr/local/lib64/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so"
 
 <VirtualHost *:80>
-    ServerName ghjk-ljbn-mnbv-jgva.ispvds.com
-    ServerAlias www.ghjk-ljbn-mnbv-jgva.ispvds.com
-    Redirect / https://ghjk-ljbn-mnbv-jgva.ispvds.com/
 </VirtualHost>
 
 <VirtualHost *:443>
     # WSGIDaemonProcess api.rusefs.com user=apache group=apache threads=2
     # WSGIScriptAlias 
-
-    ServerName ghjk-ljbn-mnbv-jgva.ispvds.com
-    ServerAlias www.ghjk-ljbn-mnbv-jgva.ispvds.com
 
     WSGIDaemonProcess ghjk-ljbn-mnbv-jgva.ispvds.com user=apache group=apache threads=2 python-path=/home/invoice/bck:/usr/lib/python3.12/site-packages/
     WSGIScriptAlias / /home/invoice/bck/wsgi.py
