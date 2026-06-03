@@ -162,13 +162,10 @@ project/
 ├── models.py               # SQLAlchemy-модели
 ├── schemas.py              # Pydantic-схемы
 ├── database.py             # Подключение к базе данных
-├── frontend/               # Статический frontend
-│   ├── index.html
-│   ├── css/
-│   ├── js/
-│   └── assets/
+├── frontend/               # frontent
 ├── uploads/                # Загруженные чеки
 ├── media/                  # Парсинг
+├── forms/                  # Шаблоны
 ├── xls/                    # Сгенерированные Excel-файлы
 ├── docs/
 │   └── images/             # Скриншоты и схемы для README
