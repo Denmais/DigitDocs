@@ -1,21 +1,21 @@
 {
   "fields": [
     {
-      "id": "meter_value",
-      "label": "Показания счётчика (ХВС), м³",
+      "id": "consumption",
+      "label": "Сумма НДС, руб",
       "type": "number",
-      "unit": "м³",
+      "unit": "руб",
       "required": true,
-      "tooltip": "Выделите показания по холодной воде",
+      "tooltip": "Выделите показания",
       "constraints": { "min": 0, "max": 999999 }
     },
     {
       "id": "consumption",
-      "label": "Расход (ХВС), м³",
+      "label": "Стоимость услуг (без НДС), руб",
       "type": "number",
-      "unit": "м³",
+      "unit": "руб",
       "required": false,
-      "tooltip": "Выделите расход холодной воды",
+      "tooltip": "Выделите показания",
       "constraints": { "min": 0, "max": 999999 }
     },
     {
