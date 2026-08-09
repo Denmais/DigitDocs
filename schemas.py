@@ -1,19 +1,19 @@
 from __future__ import annotations
-from pydantic import BaseModel, ConfigDict, AnyUrl, Field
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class UploadFile(BaseModel):
     type: str
-    comment: str | None
+    comment: str | None = None
 
 
 class DocumentTypeSerializer(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
     title: str
 
@@ -66,6 +66,7 @@ class CollectOutput(BaseModel):
     unit: str
     value: str
     display_value: str
+
 
 class HistoryOutput(BaseModel):
     name: str

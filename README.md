@@ -1,575 +1,532 @@
-# Semi-Automatic Receipt Digitization
+Система обработки документов
 
-Проект для полуавтоматической оцифровки денежных чеков: загрузка изображения или файла чека, обработка изображения, OCR-распознавание, ручная проверка/уточнение извлечённых полей, сохранение истории и выгрузка данных в Excel.
+Проект представляет собой сервис для загрузки PDF-документов, распознавания нужных полей и дальнейшей работы с полученными данными.
 
----
+Документ можно обработать вручную или автоматически. После обработки значения сохраняются в ClickHouse, сами файлы хранятся в MinIO, а служебные данные приложения — в SQLite. Для аналитики используется Apache Superset, который подключается напрямую к ClickHouse.
 
-## Содержание
+Как всё работает
 
-- [О проекте](#о-проекте)
-- [Возможности](#возможности)
-- [Стек технологий](#стек-технологий)
-- [Как это работает](#как-это-работает)
-- [Скриншоты и схемы](#скриншоты-и-схемы)
-- [Структура проекта](#структура-проекта)
-- [API](#api)
-- [Установка и запуск](#установка-и-запуск)
-- [Настройка OCR](#настройка-ocr)
-- [Работа с Excel](#работа-с-excel)
-- [База данных](#база-данных)
-- [Переменные окружения](#переменные-окружения)
-- [Дальнейшее развитие](#дальнейшее-развитие)
-
----
-
-## О проекте
-
-Система предназначена для ускорения переноса данных из денежных чеков в структурированный цифровой формат. Пользователь загружает чек, приложение выполняет предварительную обработку изображения с помощью OpenCV, распознаёт текст через Tesseract OCR, после чего пользователь может проверить и при необходимости скорректировать найденные поля.
-
-Основная идея проекта — не полностью автоматическая, а **полуавтоматическая** оцифровка: система помогает извлечь данные, но финальная проверка остаётся за пользователем.
-
----
-
-## Возможности
-
-- Загрузка файлов чеков через веб-интерфейс.
-- Хранение загруженных файлов в директории `uploads`.
-- Распознавание текста на изображениях чеков с помощью `pytesseract`.
-- Предобработка изображений с помощью `OpenCV`.
-- Получение списка типов документов.
-- Проверка статуса обработки документа.
-- Извлечение и уточнение отдельных полей.
-- Сбор подтверждённых данных.
-- Просмотр истории обработанных чеков.
-- Экспорт данных в `.xlsx`.
-- Раздача frontend-части через Flask.
-
----
-
-## Стек технологий
-
-### Backend
-
-- Python
-- Flask
-- SQLAlchemy
-- Pydantic
-- OpenCV
-- pytesseract
-- Tesseract OCR
-
-### Frontend
-
-- HTML / CSS / JavaScript
-- Статическая frontend-часть, отдаваемая Flask из директории `frontend`
-
-### Данные и экспорт
-
-- База данных через SQLAlchemy
-- Excel-выгрузка в формате `.xlsx`
-
----
-
-## Как это работает
-
-Общий сценарий работы:
-
-1. Пользователь открывает веб-интерфейс.
-2. Загружает файл денежного чека.
-3. Backend сохраняет файл в директорию `uploads`.
-4. Изображение проходит предварительную обработку через OpenCV.
-5. OCR-модуль распознаёт текст с помощью Tesseract.
-6. Система пытается извлечь нужные поля: сумму, дату, номер чека, продавца и другие данные.
-7. Пользователь проверяет результат и при необходимости исправляет поля.
-8. Подтверждённые данные сохраняются в базу данных.
-9. История обработок доступна через отдельный API.
-10. Данные можно выгрузить в Excel.
-
-```mermaid
 flowchart TD
-    A[Пользователь] --> B[Загрузка чека]
-    B --> C[Flask API]
-    C --> D[Сохранение файла]
-    D --> E[OpenCV обработка]
-    E --> F[Tesseract OCR]
-    F --> G[Извлечение полей]
-    G --> H[Ручная проверка]
-    H --> I[Сохранение в БД]
-    I --> J[История]
-    I --> K[Excel экспорт]
-```
+    A[Пользователь загружает PDF] --> B[FastAPI]
+    B --> C[MinIO: исходный PDF]
+    B --> D[SQLite: информация о загрузке]
+    B --> E{Режим обработки}
 
----
+    E -->|Ручной| F[Пользователь выбирает область]
+    E -->|Автоматический| G[Берём auto_crop из MongoDB]
 
-## Скриншоты и схемы
+    F --> H[OCR]
+    G --> H
 
+    H --> I[ClickHouse: analytics.extract_data]
 
-### Главная страница
+    I --> J[Результат в интерфейсе]
+    I --> K[XLSX]
+    I --> L[VIEW analytics.bi_numeric_values]
 
-![Главная страница](docs/images/1.png)
+    L --> M[Apache Superset]
+    M --> N[Dataset]
+    N --> O[Графики по title]
+    O --> P[Dashboard]
 
-_Описание: экран загрузки денежного чека._
+Если коротко:
 
----
+Пользователь выбирает тип документа и загружает PDF.
 
-### Загрузка файла
+Файл сохраняется в MinIO.
 
-![Загрузка файла](docs/images/2.png)
+Информация о загрузке сохраняется в SQLite.
 
-_Описание: форма выбора и отправки файла на обработку._
+Документ обрабатывается вручную или автоматически.
 
----
+OCR получает значения нужных полей.
 
-### Выбор полей и оцифровка
+Результаты записываются в ClickHouse.
 
-![Результат OCR](docs/images/4.png)
+Из них можно собрать таблицу, скачать XLSX или открыть аналитику в Superset.
 
-_Описание: Пользователь выбирает поля._
+Основные сервисы
 
----
+Проект запускается через Docker Compose.
 
-### Ручная корректировка данных
+Основные контейнеры:
 
-![Корректировка данных](docs/images/5.png)
+app — FastAPI и frontend;
 
-_Описание: пользователь проверяет и исправляет распознанные поля._
+clickhouse — результаты OCR и аналитические данные;
 
----
+mongodb — формы документов и настройки auto_crop;
 
-### История обработанных чеков
+minio — файловое хранилище;
 
-![История](docs/images/8.png)
+superset — BI;
 
-_Описание: список ранее обработанных чеков._
+superset-db — внутренний PostgreSQL Superset;
 
----
+superset-redis — Redis для Superset.
 
-### Excel-выгрузка
+Хранилища
 
-![Excel экспорт](docs/images/7.png)
+В проекте используется несколько хранилищ, потому что у разных типов данных разные задачи.
 
-_Описание: выгрузка собранных данных в `.xlsx` файл._
+SQLite
 
----
+SQLite используется для служебных данных приложения.
 
-## Структура проекта
+Файл базы:
 
+data/sql_app.db
 
-```text
-project/
-├── main.py                 # Точка входа Flask-приложения
-├── view.py                 # Бизнес-логика API-методов
-├── models.py               # SQLAlchemy-модели
-├── schemas.py              # Pydantic-схемы
-├── database.py             # Подключение к базе данных
-├── frontend/               # frontent
-├── uploads/                # Загруженные чеки
-├── media/                  # Парсинг
-├── forms/                  # Шаблоны
-├── xls/                    # Сгенерированные Excel-файлы
-├── docs/
-│   └── images/             # Скриншоты и схемы для README
-├── requirements.txt
-└── README.md
-```
+Там хранятся данные, связанные с самим процессом обработки:
 
+типы документов;
 
----
+загруженные документы;
 
-## API
+поля документов;
 
-Backend реализован на Flask. Ниже описаны маршруты, которые видны из `main.py`.
+выбранные области;
 
-### Frontend
+связи между файлами и полями;
 
-#### `GET /`
+другая служебная информация.
 
-Отдаёт `frontend/index.html`.
+Примерно:
 
-#### `GET /<path:path>`
+SQLite
+├── DocumentType
+├── UploadedFile
+├── DocumentField
+└── Crop
 
-Отдаёт статические файлы из директории `frontend`. API-маршруты, загрузки и скачивания не перехватываются frontend-роутером.
+Сам PDF в SQLite не хранится.
 
----
+Если совсем просто, SQLite отвечает за то, что происходит внутри приложения.
 
-### Загрузка файлов
+ClickHouse
 
-#### `POST /api/upload`
+ClickHouse используется для результатов OCR и аналитики.
 
-Загружает файл чека на сервер.
+Основная таблица:
 
-**Тип запроса:** `multipart/form-data`
+analytics.extract_data
 
-**Параметры:**
+CREATE TABLE analytics.extract_data
+(
+    id UInt64,
 
-| Поле | Тип | Описание |
-|---|---:|---|
-| `file` | File | Файл чека для загрузки |
-| другие поля формы | string | Дополнительные параметры, если используются во `view.upload_file` |
+    upload_id String,
+    page UInt32,
 
-**Успешный ответ:** `201 Created`
+    crop_id UInt64,
+    field_id UInt64,
 
-```json
+    document_type String,
+    filename String,
+
+    title String,
+    ru_title String,
+    unit String,
+    value_type String,
+
+    raw_value String,
+    value String,
+    numeric_value Nullable(Float64),
+
+    confidence Nullable(Float64),
+    timestamp DateTime
+)
+ENGINE = MergeTree
+ORDER BY (
+    upload_id,
+    page,
+    title,
+    timestamp,
+    id
+);
+
+Одна строка здесь — одно извлечённое значение.
+
+Например:
+
+document_type: electricity
+title: tariff_kw_day
+ru_title: Дневной тариф
+numeric_value: 6.42
+timestamp: 2026-08-09 12:30:00
+
+title — техническое имя поля:
+
+tariff_kw_day
+tariff_kw_night
+all_sum
+
+ru_title — название для интерфейса:
+
+Дневной тариф
+Ночной тариф
+Общая сумма
+
+value хранит строковое значение, а numeric_value — числовое, если поле можно представить числом.
+
+Для Superset используется VIEW:
+
+analytics.bi_numeric_values
+
+CREATE VIEW analytics.bi_numeric_values AS
+SELECT
+    upload_id,
+    page,
+    document_type,
+    filename,
+    title,
+    ru_title,
+    unit,
+    value_type,
+    value,
+    numeric_value,
+    confidence,
+    timestamp
+FROM analytics.extract_data
+WHERE numeric_value IS NOT NULL;
+
+Это простая витрина с числовыми значениями. Superset читает её напрямую.
+
+То есть здесь нет лишнего переноса:
+
+ClickHouse -> SQLite -> Superset
+
+Используется:
+
+ClickHouse -> Superset
+
+MinIO
+
+MinIO используется как файловое хранилище.
+
+В него складываются:
+
+исходные PDF;
+
+preview страниц;
+
+готовые XLSX.
+
+Примерная структура:
+
+documents/
+└── <upload_id>/
+    └── document.pdf
+
+previews/
+└── <upload_id>/
+    ├── 0.png
+    ├── 1.png
+    └── ...
+
+exports/
+└── <upload_id>.xlsx
+
+Исходные документы
+
+documents/<upload_id>/<filename>
+
+Preview страниц
+
+previews/<upload_id>/<page>.png
+
+Они нужны для ручного режима, чтобы пользователь мог открыть страницу и выделить нужную область.
+
+XLSX
+
+exports/<upload_id>.xlsx
+
+Файлы не зависят от файловой системы контейнера приложения. Контейнер можно пересобрать, а данные останутся в MinIO.
+
+Для объектов также можно задавать автоматическое удаление через lifecycle.
+
+MongoDB
+
+MongoDB хранит не результаты OCR, а описание того, как обрабатывать документ.
+
+Для каждого типа документа там находятся:
+
+список полей;
+
+подписи;
+
+типы;
+
+единицы измерения;
+
+обязательность;
+
+ограничения;
+
+настройки автоматического crop.
+
+Пример поля:
+
 {
-  "id": 1,
-  "filename": "receipt.png",
-  "message": "File uploaded successfully"
+  id: "tariff_kw_day",
+  label: "Дневной тариф",
+  type: "number",
+  unit: "₽/кВт·ч",
+  required: true
 }
-```
 
-**Ошибки:**
+Пример auto_crop:
 
-- `400` — файл не передан или имя файла пустое.
-- `500` — внутренняя ошибка сервера.
+auto_crop: {
+  validation: [
+    // области для проверки шаблона
+  ],
 
----
-
-### Загруженные файлы
-
-#### `GET /uploads/<filename>`
-
-Возвращает загруженный файл из директории `uploads`.
-
----
-
-### Скачивание файла
-
-#### `GET /download/<filename>`
-
-Скачивает файл из директории `uploads` как вложение.
-
-**Ошибки:**
-
-- `404` — файл не найден.
-
----
-
-### Типы документов
-
-#### `GET /api/document-types`
-
-Возвращает список доступных типов документов.
-
-**Успешный ответ:** `200 OK`
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Receipt"
+  fields: {
+    tariff_kw_day: {
+      crop: {
+        x: 0.54,
+        y: 0.31,
+        width: 0.07,
+        height: 0.01
+      }
+    }
   }
-]
-```
-
----
-
-### Статус обработки
-
-#### `GET /api/process/status`
-
-Возвращает статус обработки документа или список доступных для проверки полей.
-
-**Query-параметры:** зависят от реализации функции `process()` в `view.py`.
-
-Пример:
-
-```http
-GET /api/process/status?id=1
-```
-
-**Успешный ответ:** `200 OK`
-
-**Ошибки:**
-
-- `400` — неверные параметры или ошибка обработки.
-
----
-
-### Извлечение поля
-
-#### `POST /api/extract-field`
-
-Извлекает или уточняет конкретное поле на основе переданного JSON.
-
-**Тип запроса:** `application/json`
-
-Пример запроса:
-
-```json
-{
-  "document_id": 1,
-  "field_name": "total",
-  "value": "12.50"
 }
-```
 
-**Успешный ответ:** `200 OK`
+Координаты находятся в диапазоне 0..1, поэтому они не зависят напрямую от размера изображения.
 
-```json
-{
-  "document_id": 1,
-  "field_name": "total",
-  "value": "12.50"
-}
-```
+Ручная обработка
 
-**Ошибки:**
+В ручном режиме пользователь сам выбирает область для каждого поля.
 
-- `400` — пустой или некорректный JSON.
+flowchart LR
+    A[PDF] --> B[Выбор страницы]
+    B --> C[Выбор поля]
+    C --> D[Выделение области]
+    D --> E[/api/extract-field]
+    E --> F[OCR]
+    F --> G[ClickHouse]
+    G --> H[Значение появляется в форме]
 
----
+После заполнения полей пользователь нажимает:
 
-### Сбор подтверждённых данных
+Сформировать таблицу
 
-#### `POST /api/collect`
+Frontend вызывает:
 
-Сохраняет подтверждённые данные после проверки пользователем.
+POST /api/collect
 
-**Тип запроса:** `application/json`
+и получает итоговые значения.
 
-Пример запроса:
+Автоматическая обработка
 
-```json
-{
-  "document_id": 1,
-  "fields": {
-    "date": "2026-05-12",
-    "total": "12.50",
-    "seller": "Example Store"
-  }
-}
-```
+В автоматическом режиме области выбирать не нужно.
 
-**Успешный ответ:** зависит от реализации функции `collect()`.
+Backend получает auto_crop из MongoDB, проверяет документ и запускает OCR по заранее заданным областям.
 
-**Ошибки:**
+flowchart TD
+    A[PDF] --> B[Получаем auto_crop из MongoDB]
+    B --> C[Проверяем validation области]
+    C -->|Документ подходит| D[Берём crop полей]
+    C -->|Не подходит| E[validation_failed]
+    D --> F[OCR]
+    F --> G[ClickHouse]
+    G --> H[Итоговая таблица]
 
-- `400` — ошибка сохранения или некорректные данные.
+Каждая страница PDF обрабатывается отдельно.
 
----
+XLSX
 
-### История
+После обработки результат можно скачать как Excel-файл.
 
-#### `GET /api/history`
+Frontend вызывает:
 
-Возвращает историю обработанных чеков.
+GET /api/excel?task_id=<upload_id>
 
-**Успешный ответ:** `200 OK`
+Backend берёт значения из ClickHouse, создаёт XLSX и сохраняет его в MinIO:
 
-```json
-[
-  {
-    "id": 1,
-    "filename": "receipt.png",
-    "created_at": "2026-05-12T12:00:00",
-    "status": "processed"
-  }
-]
-```
+exports/<upload_id>.xlsx
 
----
+После этого файл отдаётся пользователю.
 
-### Excel-экспорт
+BI и Superset
 
-#### `GET /api/excel`
+Для BI используется Apache Superset.
 
-Генерирует или возвращает Excel-файл из директории `xls`.
+Кнопка:
 
-**Query-параметры:** зависят от реализации функции `excel()` в `view.py`.
+Опубликовать в BI
 
-Пример:
+вызывает:
 
-```http
-GET /api/excel?id=1
-```
+POST /api/bi/publish
 
-**Ответ:** `.xlsx` файл для скачивания.
+с текущим task_id.
 
-**Ошибки:**
+Дальше функция из create_mart.py:
 
-- `400` — ошибка генерации или чтения Excel-файла.
+смотрит, какие числовые title есть у документа;
 
----
+авторизуется в Superset;
 
-## Установка и запуск
+находит или создаёт подключение к ClickHouse;
 
-### 1. Клонирование репозитория
+находит или создаёт Dataset;
 
-```bash
-git clone <repository-url>
-cd <project-folder>
-```
+создаёт Dashboard для типа документа;
 
-### 2. Создание виртуального окружения
+создаёт графики для числовых полей;
 
-```bash
-python -m venv .venv
-```
+возвращает ссылку на Dashboard.
 
-Активация окружения:
+flowchart TD
+    A[Опубликовать в BI] --> B[/api/bi/publish]
+    B --> C[create_mart.py]
+    C --> D[ClickHouse: bi_numeric_values]
+    C --> E[Superset REST API]
 
-#### Windows
+    E --> F[Database connection]
+    F --> G[Dataset]
+    G --> H[Chart по title]
+    H --> I[Dashboard]
 
-```bash
-.venv\Scripts\activate
-```
+    I --> J[dashboard_url]
+    J --> K[Dashboard открывается в браузере]
 
-#### Linux / macOS
+Например, если в ClickHouse есть:
 
-```bash
-source .venv/bin/activate
-```
+timestamp            title            numeric_value
+2026-08-01 10:00     tariff_kw_day    6.42
+2026-08-02 10:00     tariff_kw_day    6.45
+2026-08-03 10:00     tariff_kw_day    6.51
 
-### 3. Установка зависимостей
+Superset фильтрует:
 
-```bash
-pip install -r requirements.txt
-```
+title = tariff_kw_day
 
-Если файла `requirements.txt` ещё нет, его можно создать командой:
+и строит временной график по timestamp и numeric_value.
 
-```bash
-pip freeze > requirements.txt
-```
+Где что хранится
 
-Минимальный пример зависимостей:
+Хранилище
 
-```text
-annotated-types==0.7.0
-blinker==1.9.0
-click==8.3.1
-Flask==3.1.2
-Flask-Pydantic==0.13.2
-Flask-SQLAlchemy==3.1.1
-greenlet==3.3.0
-itsdangerous==2.2.0
-Jinja2==3.1.6
-MarkupSafe==3.0.3
-pydantic==2.12.5
-pydantic_core==2.41.5
-SQLAlchemy==2.0.44
-typing-inspection==0.4.2
-typing_extensions==4.15.0
-Werkzeug==3.1.4
+Что хранится
 
-```
+SQLite
 
-### 4. Установка Tesseract OCR
+состояние приложения, типы документов, загрузки, поля и crop
 
-#### Windows
+ClickHouse
 
-1. Установите Tesseract OCR.
-2. Добавьте путь к `tesseract.exe` в `PATH`.
-3. При необходимости явно укажите путь в коде:
+извлечённые значения и данные для аналитики
 
-```python
-import pytesseract
+MinIO
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-```
+PDF, preview страниц и XLSX
 
-#### Linux
+MongoDB
 
-```bash
-sudo apt update
-sudo apt install tesseract-ocr
-```
+формы документов и настройки auto_crop
 
-Для русского языка:
+PostgreSQL Superset
 
-```bash
-sudo apt install tesseract-ocr-rus
-```
+внутренние настройки Superset
 
-#### macOS
+Redis
 
-```bash
-brew install tesseract
-```
+служебный кэш Superset
 
-### 5. Создание нужных директорий
+Если совсем коротко:
 
-Приложение автоматически создаёт директорию `uploads`, но при необходимости можно создать папки вручную:
+SQLite     -> что происходит внутри приложения
+ClickHouse -> что было распознано
+MinIO      -> сами файлы
+MongoDB    -> как обрабатывать документ
+Superset   -> как показывать аналитику
 
-```bash
-mkdir uploads
-mkdir xls
-mkdir -p docs/images
-```
+Запуск
 
-### 6. Запуск приложения
+docker compose up --build -d
 
-```bash
-python main.py
-```
+Проверить контейнеры:
 
-По умолчанию Flask запустится в debug-режиме.
+docker compose ps
 
-Откройте в браузере:
+Основное приложение:
 
-```text
-http://127.0.0.1:5000
-```
+http://localhost:8000
 
----
+Superset:
 
-## Настройка OCR
+http://localhost:8088
 
-Для работы OCR используется связка:
+MinIO Console:
 
-- `OpenCV` — подготовка изображения;
-- `pytesseract` — Python-обёртка;
-- `Tesseract OCR` — движок распознавания текста.
+http://localhost:9101
 
-1. Чтение изображения.
-2. Перевод в оттенки серого.
-3. Удаление шума.
-4. Бинаризацию.
-5. Выравнивание или обрезку изображения.
-6. OCR-распознавание.
-7. Постобработку текста регулярными выражениями или правилами.
+Основные API
 
+POST /api/upload
+GET  /api/document-types
+GET  /api/process/status
+POST /api/process/auto
+POST /api/extract-field
+POST /api/collect
+GET  /api/excel
+POST /api/bi/publish
 
-## Работа с Excel
+Коротко:
 
-Экспорт выполняется через маршрут:
+/api/upload          -> загрузить документ
+/api/document-types  -> получить типы документов
+/api/process/status  -> подготовить ручной режим
+/api/process/auto    -> автоматическая обработка
+/api/extract-field   -> распознать выбранную область
+/api/collect         -> собрать итоговые значения
+/api/excel           -> скачать XLSX
+/api/bi/publish      -> создать или обновить BI в Superset
 
-```http
-GET /api/excel
-```
+Итоговая схема
 
-Сгенерированные файлы сохраняются в директории:
+flowchart TB
+    User[Пользователь]
 
-```text
-xls/
-```
+    subgraph App[Приложение]
+        Frontend[Frontend]
+        API[FastAPI]
+        OCR[OCR]
+    end
 
-Файл отправляется пользователю через `send_file()` как вложение с расширением `.xlsx`.
+    subgraph Storage[Хранилища]
+        SQLite[(SQLite)]
+        CH[(ClickHouse)]
+        Mongo[(MongoDB)]
+        MinIO[(MinIO)]
+    end
 
----
+    subgraph BI[Аналитика]
+        View[bi_numeric_values]
+        Superset[Apache Superset]
+        Dashboard[Dashboard]
+    end
 
-## База данных
+    User --> Frontend
+    Frontend --> API
 
-В `main.py` база данных подключается через:
+    API --> SQLite
+    API --> Mongo
+    API --> MinIO
 
-```python
-from database import SessionLocal, engine
-import models
-```
+    API --> OCR
+    OCR --> CH
 
-При запуске приложения создаются таблицы:
+    CH --> View
+    View --> Superset
+    Superset --> Dashboard
 
-```python
-models.Base.metadata.create_all(bind=engine)
-```
+    Dashboard --> User
 
-Сессия базы данных создаётся на время запроса и закрывается после завершения контекста Flask:
+Данные разделены по назначению и хранятся в подходящих для этого сервисах.
 
-```python
-def get_db():
-    if "db" not in g:
-        g.db = SessionLocal()
-    return g.db
-```
-
----
+Файлы лежат в MinIO, служебная структура приложения — в SQLite, результаты распознавания — в ClickHouse, описание форм — в MongoDB, а Superset работает уже поверх аналитической витрины ClickHouse.

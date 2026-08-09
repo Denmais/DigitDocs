@@ -1,4 +1,3 @@
-
 import { ROOT_ACTIONBAR } from '../../constants/root.js';
 import { CustomSelect } from '../Select/Select.js';
 import { UploadButton } from '../UploadButton/UploadButton.js';
@@ -14,36 +13,40 @@ import { showCropTourOnce } from '../../utils/showCropTour.js';
 
 class Actionbar {
   constructor() {
-
-    document.addEventListener('fieldCropStart', (e) =>
-      this.#handleFieldCrop(e.detail)
-    );
+    document.addEventListener('fieldCropStart', (e) => {
+      this.#handleFieldCrop(e.detail);
+    });
   }
 
-
+  // Первый экран: тип документа, загрузка и выбор режима.
   render() {
-    document.body.classList.remove('page-history');
-    
-    const html = `
-        <form class="form">
-            <div class="form__group">
-                <label for="doc-type" class="form__label">Выберите тип документа:</label>
-                <div class="custom-select" id="doc-type"></div>
-            </div>
-            <div class="form__group">
-                <label class="form__label">Загрузите файл чека в формате <span class="form__label--accent">PDF</span></label>
-                <div class="upload-zone" id="uploadZone"></div>
-            </div>
-            <div class="form__group form__group--hidden" id="processing-btn">
-                <button class="accent__btn" type="button" id="processBtn">
-                    <img class="accent__btn--img" src="../../data/images/processing.svg" />
-                    Начать обработку
-                </button>
-            </div>
-        </form>
-    `;
+    ROOT_ACTIONBAR.innerHTML = `
+      <form class="form">
+        <div class="form__group">
+          <label for="doc-type" class="form__label">Выберите тип документа:</label>
+          <div class="custom-select" id="doc-type"></div>
+        </div>
 
-    ROOT_ACTIONBAR.innerHTML = html;
+        <div class="form__group">
+          <label class="form__label">
+            Загрузите файл чека в формате <span class="form__label--accent">PDF</span>
+          </label>
+          <div class="upload-zone" id="uploadZone"></div>
+        </div>
+
+        <div class="form__group form__group--hidden" id="processing-btn">
+          <button class="accent__btn" type="button" id="manualProcessBtn">
+            <img class="accent__btn--img" src="../../data/images/processing.svg" />
+            Начать ручную обработку
+          </button>
+
+          <button class="accent__btn accent__btn--outline" type="button" id="autoProcessBtn">
+            <img class="accent__btn--img" src="../../data/images/processing.svg" />
+            Начать автоматическую обработку
+          </button>
+        </div>
+      </form>
+    `;
 
     this.renderSelect();
 
@@ -51,23 +54,31 @@ class Actionbar {
     uploadBtn.render();
 
     const popup = new PopUp();
-    const popupButton = document.querySelector('#processBtn');
-    popupButton.addEventListener('click', (e) => {
-      nextStep(); 
+
+    document.querySelector('#manualProcessBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      popup.render();
+      nextStep();
+      popup.render('manual');
+    });
+
+    document.querySelector('#autoProcessBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      nextStep();
+      popup.render('auto');
     });
   }
 
-
+  // Загружает типы документов и рисует select.
   async renderSelect() {
-    const res = await fetch('/api/document-types');
-    const types = await res.json();
+    const response = await fetch('/api/document-types');
 
-    const data = types.map(t => ({
-      id: t.id,
-      title: t.title,
-    }));
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Не удалось получить типы документов: ${response.status} ${text}`);
+    }
+
+    const types = await response.json();
+    const data = types.map((item) => ({ id: item.id, title: item.title }));
 
     const select = new CustomSelect({
       rootId: 'doc-type',
@@ -84,23 +95,18 @@ class Actionbar {
     });
   }
 
-
-
+  // Включает выбор области для нужного поля.
   async #handleFieldCrop({ fieldId }) {
-    const { cancelCrop } = await import('../../utils/cropManager.js');
+    // Оставляем динамический импорт как в рабочей версии.
+    const { cancelCrop, cropState } = await import('../../utils/cropManager.js');
+
     cancelCrop();
-
     startCrop(fieldId);
-
-    const { cropState } = await import('../../utils/cropManager.js');
     cropState.page = viewerState.pageIndex;
-
     enableCropMode();
   }
 
-
-
-
+  // Ручной режим: поля слева, документ справа.
   updateToDataSelectionUI(processData) {
     ROOT_ACTIONBAR.classList.remove('actions');
     localStorage.setItem('processResult', JSON.stringify(processData));
@@ -109,14 +115,12 @@ class Actionbar {
     viewerState.pageIndex = 0;
     viewerState.zoom = 1;
 
-
-    const newHtml = `
+    ROOT_ACTIONBAR.innerHTML = `
       <div class="data-selection">
         <div class="data-selection__layout">
-
           <div class="data-selection__form">
             <div class="tariffs-block" id="categories"></div>
-            <button class="accent__btn data-selection__submit">
+            <button class="accent__btn data-selection__submit" type="button">
               Сформировать таблицу
             </button>
           </div>
@@ -128,9 +132,7 @@ class Actionbar {
                 <span class="viewer__zoom">100%</span>
                 <button data-zoom="in">+</button>
                 <p>|</p>
-                <button class="viewer__reset" title="Сброс масштаба">
-                  ⤾
-                </button>
+                <button class="viewer__reset" title="Сброс масштаба">⤾</button>
               </div>
 
               <div class="viewer__canvas">
@@ -141,107 +143,75 @@ class Actionbar {
             </div>
 
             <div class="viewer__sidebar">
-              ${processData.pages.map(
-                (p, i) => `
-                  <div class="viewer__thumb" data-index="${i}">
-                    <img src="${p.image_url}">
-                  </div>
-                `
-              ).join('')}
+              ${processData.pages.map((page, index) => `
+                <div class="viewer__thumb" data-index="${index}">
+                  <img src="${page.image_url}">
+                </div>
+              `).join('')}
             </div>
           </div>
         </div>
       </div>
     `;
 
-    ROOT_ACTIONBAR.innerHTML = newHtml;
-
-    this.#renderTariffSelects(processData.fields);
-
     this.#renderTariffSelects(processData.fields);
     showCropTourOnce();
-
 
     document.addEventListener('cropSelected', async (e) => {
       const { fieldId, page, crop } = e.detail;
 
       console.log('[CROP]', {
+        fieldId,
         page,
         zoom: viewerState.zoom,
         crop,
-        img: {
-          naturalW: document.querySelector('.viewer__page')?.naturalWidth,
-          naturalH: document.querySelector('.viewer__page')?.naturalHeight,
-        }
       });
-
 
       PopUp.showProcessing();
 
-      const r = await fetch('/api/extract-field', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id: JSON.parse(localStorage.getItem('processResult')).task_id,
-          field_id: fieldId,
-          page,
-          crop,
-        }),
-      });
-
-      let res;
-      const text = await r.text();
       try {
-        res = JSON.parse(text);
-      } catch (e) {
-        console.error('[extract-field] not JSON:', text);
-        throw e;
-      }
+        const processResult = JSON.parse(localStorage.getItem('processResult'));
 
-      if (!r.ok) {
-        console.error('[extract-field] HTTP error', r.status, res);
-        alert(`extract-field error: ${r.status}`);
-        return;
-      }
+        const response = await fetch('/api/extract-field', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task_id: processResult.task_id,
+            field_id: fieldId,
+            page,
+            crop,
+          }),
+        });
 
-      console.log('[extract-field] response:', res);
+        const text = await response.text();
+        let result = null;
 
-      PopUp.close();
-
-      function sanitizeForInput(value, inputType) {
-        if (value == null) return '';
-        let v = String(value).trim();
-
-        if (inputType === 'number') {
-          v = v.replace(/[^\d.,\s-]/g, '');
-          v = v.replace(/\s+/g, '');
-          if (v.includes(',') && !v.includes('.')) v = v.replace(',', '.');
-
-          v = v.replace(/(?!^)-/g, '');
-
-          const firstDot = v.indexOf('.');
-          if (firstDot !== -1) {
-            v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
-          }
-          if (v.startsWith('.')) v = '0' + v;
-          if (v.startsWith('-.')) v = v.replace('-.', '-0.');
-
-          v = v.replace(/\.$/, '');
-
-          if (!/^[-]?\d+(\.\d+)?$/.test(v)) return '';
+        try {
+          result = text ? JSON.parse(text) : {};
+        } catch {
+          throw new Error(`Backend вернул не JSON: ${text}`);
         }
 
-        return v;
-      }
+        if (!response.ok) {
+          const detail = result?.detail || result?.error || text;
+          throw new Error(`extract-field: ${response.status} ${detail}`);
+        }
 
-      const input = document.getElementById(fieldId);
-      if (input) {
-        const raw = res.value ?? res.field?.value ?? '';
-        input.value = sanitizeForInput(raw, input.type);
-        input.classList.add('filled');
+        console.log('[extract-field] response:', result);
+
+        const input = document.getElementById(fieldId);
+        if (input) {
+          const raw = result.value ?? result.field?.value ?? '';
+          input.value = sanitizeForInput(raw, input.type);
+          input.classList.add('filled');
+        }
+      } catch (err) {
+        console.error(err);
+        alert(err instanceof Error ? err.message : String(err));
+      } finally {
+        PopUp.close();
       }
     });
-
 
     const submitBtn = document.querySelector('.data-selection__submit');
 
@@ -253,27 +223,51 @@ class Actionbar {
         return;
       }
 
-      PopUp.showProcessing();
+      PopUp.showProcessing('Формирование результата...');
 
-      const res = await fetch('/api/collect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id: JSON.parse(localStorage.getItem('processResult')).task_id,
-          fields,
-        }),
-      }).then(r => r.json());
+      try {
+        const processResult = JSON.parse(localStorage.getItem('processResult'));
 
-      console.log('=== /api/collect response ===', res);
+        const response = await fetch('/api/collect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task_id: processResult.task_id,
+            fields,
+          }),
+        });
 
-      PopUp.close();
-      this.#showResultTable(res);
+        const text = await response.text();
+        let result = {};
+
+        if (text) {
+          try {
+            result = JSON.parse(text);
+          } catch {
+            throw new Error(`Backend вернул не JSON: ${text}`);
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            result?.detail || result?.error || text || 'Ошибка формирования результата'
+          );
+        }
+
+        console.log('=== /api/collect response ===', result);
+        this.showResultTable(result);
+      } catch (err) {
+        console.error(err);
+        alert(err instanceof Error ? err.message : String(err));
+      } finally {
+        PopUp.close();
+      }
     });
 
     this.#initViewer();
   }
 
-
+  // Рисует поля из Mongo-формы.
   async #renderTariffSelects(fields) {
     const input = new CustomInput({
       rootId: 'categories',
@@ -284,7 +278,7 @@ class Actionbar {
     input.render();
   }
 
-
+  // Переключение страниц и масштаб документа.
   #initViewer() {
     const canvas = document.querySelector('.viewer__canvas');
     const mainImg = document.querySelector('.viewer__page');
@@ -293,14 +287,14 @@ class Actionbar {
 
     if (!canvas || !mainImg || !zoomLabel || !wrapper) return;
 
-    // --- state ---
     viewerState.zoom = 1;
     viewerState.baseScale = 1;
 
-    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
     const applyOverflow = () => {
       canvas.style.overflow = viewerState.zoom > 1 ? 'auto' : 'hidden';
+
       if (viewerState.zoom <= 1) {
         canvas.scrollTop = 0;
         canvas.scrollLeft = 0;
@@ -315,9 +309,9 @@ class Actionbar {
     };
 
     const recalcBaseScaleFitHeight = () => {
-      const canvasH = canvas.clientHeight || 1;
-      const imgH = mainImg.naturalHeight || 1;
-      viewerState.baseScale = canvasH / imgH;
+      const canvasHeight = canvas.clientHeight || 1;
+      const imageHeight = mainImg.naturalHeight || 1;
+      viewerState.baseScale = canvasHeight / imageHeight;
     };
 
     const renderPage = () => {
@@ -339,19 +333,19 @@ class Actionbar {
 
     renderPage();
 
-
     const thumbs = document.querySelectorAll('.viewer__thumb');
     if (thumbs.length > 0) thumbs[0].classList.add('active');
 
-    document.querySelectorAll('.viewer__thumb').forEach((thumb) => {
+    thumbs.forEach((thumb) => {
       thumb.addEventListener('click', async () => {
         const { cancelCrop } = await import('../../utils/cropManager.js');
+
         disableCropMode();
         cancelCrop();
+
         viewerState.pageIndex = Number(thumb.dataset.index);
 
-        document.querySelectorAll('.viewer__thumb')
-          .forEach((t) => t.classList.remove('active'));
+        thumbs.forEach((item) => item.classList.remove('active'));
         thumb.classList.add('active');
 
         viewerState.zoom = 1;
@@ -360,48 +354,53 @@ class Actionbar {
     });
 
     document.querySelector('[data-zoom="in"]').onclick = () => {
-      viewerState.zoom = clamp(viewerState.zoom + 0.1, viewerState.minZoom || 0.2, viewerState.maxZoom || 5);
+      viewerState.zoom = clamp(
+        viewerState.zoom + 0.1,
+        viewerState.minZoom || 0.2,
+        viewerState.maxZoom || 5
+      );
       applyTransform();
     };
 
     document.querySelector('[data-zoom="out"]').onclick = () => {
-      viewerState.zoom = clamp(viewerState.zoom - 0.1, viewerState.minZoom || 0.2, viewerState.maxZoom || 5);
+      viewerState.zoom = clamp(
+        viewerState.zoom - 0.1,
+        viewerState.minZoom || 0.2,
+        viewerState.maxZoom || 5
+      );
       applyTransform();
     };
 
     document.querySelector('.viewer__reset').onclick = resetView;
 
-    canvas.addEventListener(
-      'wheel',
-      (e) => {
-        if (!e.ctrlKey) return;
-        e.preventDefault();
+    canvas.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
 
-        const prevZoom = viewerState.zoom;
-        const prevScale = viewerState.baseScale * prevZoom;
+      e.preventDefault();
 
-        const nextZoom = clamp(
-          e.deltaY < 0 ? prevZoom + 0.1 : prevZoom - 0.1,
-          viewerState.minZoom || 0.2,
-          viewerState.maxZoom || 5
-        );
+      const prevZoom = viewerState.zoom;
+      const prevScale = viewerState.baseScale * prevZoom;
 
-        if (nextZoom === prevZoom) return;
-        viewerState.zoom = nextZoom;
+      const nextZoom = clamp(
+        e.deltaY < 0 ? prevZoom + 0.1 : prevZoom - 0.1,
+        viewerState.minZoom || 0.2,
+        viewerState.maxZoom || 5
+      );
 
-        const rect = canvas.getBoundingClientRect();
-        const offsetX = (e.clientX - rect.left + canvas.scrollLeft) / prevScale;
-        const offsetY = (e.clientY - rect.top + canvas.scrollTop) / prevScale;
+      if (nextZoom === prevZoom) return;
 
-        applyTransform();
+      viewerState.zoom = nextZoom;
 
-        const newScale = viewerState.baseScale * viewerState.zoom;
+      const rect = canvas.getBoundingClientRect();
+      const offsetX = (e.clientX - rect.left + canvas.scrollLeft) / prevScale;
+      const offsetY = (e.clientY - rect.top + canvas.scrollTop) / prevScale;
 
-        canvas.scrollLeft = offsetX * newScale - (e.clientX - rect.left);
-        canvas.scrollTop  = offsetY * newScale - (e.clientY - rect.top);
-      },
-      { passive: false }
-    );
+      applyTransform();
+
+      const newScale = viewerState.baseScale * viewerState.zoom;
+      canvas.scrollLeft = offsetX * newScale - (e.clientX - rect.left);
+      canvas.scrollTop = offsetY * newScale - (e.clientY - rect.top);
+    }, { passive: false });
 
     window.addEventListener('resize', () => {
       recalcBaseScaleFitHeight();
@@ -409,49 +408,44 @@ class Actionbar {
     });
   }
 
-
-
-  #showResultTable(result) {
+  // Показывает итоговую таблицу.
+  showResultTable(result) {
     nextStep();
-
-    ROOT_ACTIONBAR.innerHTML = `
-      <div class="result-wrapper"></div>
-    `;
+    ROOT_ACTIONBAR.innerHTML = '<div class="result-wrapper"></div>';
 
     const wrapper = document.querySelector('.result-wrapper');
     renderResultTable(wrapper, result);
   }
+}
 
+// Приводит OCR-значение к формату input.
+function sanitizeForInput(value, inputType) {
+  if (value == null) return '';
 
-  #downloadCSV(table) {
-    const rows = [
-      ['Параметр', 'Значение'],
-      ...table.map(r => [r.label, r.display_value ?? r.value]),
-    ];
+  let result = String(value).trim();
+  if (inputType !== 'number') return result;
 
-    const csv = rows.map(r => r.join(';')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  result = result.replace(/[^\d.,\s-]/g, '');
+  result = result.replace(/\s+/g, '');
 
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'result.csv';
-    link.click();
+  if (result.includes(',') && !result.includes('.')) {
+    result = result.replace(',', '.');
   }
 
+  result = result.replace(/(?!^)-/g, '');
 
-  async #publishToBI(resultId) {
-    PopUp.showProcessing();
-
-    const res = await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result_id: resultId, target: 'bi' }),
-    }).then(r => r.json());
-
-    PopUp.close();
-
-    if (res.url) window.open(res.url, '_blank');
+  const firstDot = result.indexOf('.');
+  if (firstDot !== -1) {
+    result = result.slice(0, firstDot + 1) + result.slice(firstDot + 1).replace(/\./g, '');
   }
+
+  if (result.startsWith('.')) result = '0' + result;
+  if (result.startsWith('-.')) result = result.replace('-.', '-0.');
+
+  result = result.replace(/\.$/, '');
+
+  if (!/^[-]?\d+(\.\d+)?$/.test(result)) return '';
+  return result;
 }
 
 export const actionbarElement = new Actionbar();

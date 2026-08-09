@@ -1,35 +1,23 @@
 export class CustomInput {
-
   constructor({ rootId, data = [] }) {
     this.rootEl = document.getElementById(rootId);
     this.data = data;
   }
 
-
+  // Рисует поля и подключает выбор области.
   render() {
-
-    this.rootEl.innerHTML = this.data
-      .map((field) => this.#renderField(field))
-      .join('');
-
+    this.rootEl.innerHTML = this.data.map((field) => this.#renderField(field)).join('');
     this.#bindActions();
 
     document.addEventListener('cropModeEnabled', (e) => {
       this.#highlightField(e.detail.fieldId);
     });
 
- 
-    document.addEventListener('cropModeCanceled', () => {
-      this.#clearHighlight();
-    });
-
-
-    document.addEventListener('cropSelected', () => {
-      this.#clearHighlight();
-    });
+    document.addEventListener('cropModeCanceled', () => this.#clearHighlight());
+    document.addEventListener('cropSelected', () => this.#clearHighlight());
   }
 
-
+  // Кнопка справа запускает выбор области на документе.
   #bindActions() {
     this.rootEl.addEventListener('click', (e) => {
       const btn = e.target.closest('.tariff-field__action');
@@ -38,25 +26,17 @@ export class CustomInput {
       const field = btn.closest('.tariff-field');
       if (!field) return;
 
-      const fieldId = field.dataset.fieldId;
-
-      document.dispatchEvent(
-        new CustomEvent('fieldCropStart', {
-          detail: { fieldId },
-        })
-      );
+      document.dispatchEvent(new CustomEvent('fieldCropStart', {
+        detail: { fieldId: field.dataset.fieldId },
+      }));
     });
   }
 
-
   #highlightField(fieldId) {
     this.#clearHighlight();
-
-    const field = this.rootEl.querySelector(
-      `.tariff-field[data-field-id="${fieldId}"]`
-    );
-
-    if (field) field.classList.add('tariff-field--active');
+    this.rootEl
+      .querySelector(`.tariff-field[data-field-id="${fieldId}"]`)
+      ?.classList.add('tariff-field--active');
   }
 
   #clearHighlight() {
@@ -65,18 +45,9 @@ export class CustomInput {
       .forEach((el) => el.classList.remove('tariff-field--active'));
   }
 
-
+  // Рисует одно поле из Mongo-формы.
   #renderField(field) {
-    const {
-      id,
-      label,
-      type,
-      required,
-      tooltip,
-      unit,
-      constraints,
-      value,
-    } = field;
+    const { id, label, type, required, tooltip, unit, constraints, value } = field;
 
     return `
       <div class="tariff-field" data-field-id="${id}">
@@ -89,18 +60,13 @@ export class CustomInput {
             ${required ? 'required' : ''}
             value="${value ?? ''}"
             placeholder="${tooltip || ''}"
-            ${constraints?.min ? `min="${constraints.min}"` : ''}
-            ${constraints?.max ? `max="${constraints.max}"` : ''}
-            ${constraints?.step ? `step="${constraints.step}"` : ''}
+            ${constraints?.min != null ? `min="${constraints.min}"` : ''}
+            ${constraints?.max != null ? `max="${constraints.max}"` : ''}
+            ${constraints?.step != null ? `step="${constraints.step}"` : ''}
           />
 
-          ${
-            unit
-              ? `<span class="tariff-field__unit"></span>`
-              : ''
-          }
+          ${unit ? '<span class="tariff-field__unit"></span>' : ''}
 
-          <!-- Кнопка запуска визуального выбора значения -->
           <button
             type="button"
             class="tariff-field__action"

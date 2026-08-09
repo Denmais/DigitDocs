@@ -1,48 +1,120 @@
 <!DOCTYPE html>
 <html lang="ru">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Receipt management application" />
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    >
+    <meta
+      name="description"
+      content="Receipt management application"
+    >
+
     <title>ReceiptApp</title>
+
     <!-- Favicon -->
-    <link rel="icon" href="./data/images/favicon.png" type="image/x-icon" />
+    <link
+      rel="icon"
+      href="./data/images/favicon.png"
+      type="image/x-icon"
+    >
+
     <!-- Fonts -->
-    <link rel="stylesheet" href="./data/css/fonts.css" />
+    <link
+      rel="stylesheet"
+      href="./data/css/fonts.css"
+    >
+
     <!-- Global styles -->
-    <link rel="stylesheet" href="./data/css/reset.css" />
-    <link rel="stylesheet" href="./data/css/style.css" />
-    <link rel="stylesheet" href="./data/css/tour.css">
-    <!-- Component styles -->
-    <link rel="stylesheet" href="./components/Sidebar/Sidebar.css" />
-    <link rel="stylesheet" href="./components/Statusbar/Statusbar.css" />
-    <link rel="stylesheet" href="./components/Actionbar/Actionbar.css" />
-    <link rel="stylesheet" href="./components/Select/Select.css" />
-    <link rel="stylesheet" href="./components/Input/Input.css" />
-    <link rel="stylesheet" href="./components/UploadButton/UploadButton.css" />
-    <link rel="stylesheet" href="./components/PopUp/PopUp.css" />
-    <link rel="stylesheet" href="./components/PdfCrop/PdfCrop.css" />
-    <link rel="stylesheet" href="./components/ResultTable/ResultTable.css" />
-    <link rel="stylesheet" href="./components/HistoryPage/HistoryPage.css">
-    <!-- Media Styles -->
-    <link rel="stylesheet" href="./data/css/media.css">
+    <link
+      rel="stylesheet"
+      href="./data/css/reset.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./data/css/style.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./data/css/tour.css"
+    >
+
+    <!-- Components -->
+    <link
+      rel="stylesheet"
+      href="./components/Sidebar/Sidebar.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/Statusbar/Statusbar.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/Actionbar/Actionbar.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/Select/Select.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/Input/Input.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/UploadButton/UploadButton.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/PopUp/PopUp.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/PdfCrop/PdfCrop.css"
+    >
+    <link
+      rel="stylesheet"
+      href="./components/ResultTable/ResultTable.css"
+    >
+
+    <!-- Media -->
+    <link
+      rel="stylesheet"
+      href="./data/css/media.css"
+    >
+
     <!-- Entry point -->
-    <script type="module" src="./main.js"></script>
-    <!-- Start animation -->
+    <script
+      type="module"
+      src="./main.js"
+    ></script>
+
+    <!-- Стартовая анимация -->
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('loaded');
       });
     </script>
   </head>
+
   <body class="main__container">
-    <!-- Sidebar -->
-    <aside class="sidebar sidebar--close" id="sidebar"></aside>
+    <aside
+      class="sidebar sidebar--close"
+      id="sidebar"
+    ></aside>
+
     <main class="main">
-      <!-- Statusbar -->
-      <section class="statusbar" id="statusbar"></section>
-      <!-- Actionbar -->
-      <section class="actions" id="action-bar" style="height: 100%;"></section>
+      <section
+        class="statusbar"
+        id="statusbar"
+      ></section>
+
+      <section
+        class="actions"
+        id="action-bar"
+        style="height: 100%;"
+      ></section>
     </main>
   </body>
 </html>

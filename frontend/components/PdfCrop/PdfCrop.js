@@ -1,15 +1,13 @@
 import { cropState, cancelCrop } from '../../utils/cropManager.js';
 import { viewerState } from '../../services/viewerState.js';
 
-
 let overlay;
 let rect;
+let wrapper;
 let startX = 0;
 let startY = 0;
-let wrapper;
-let isActive = false;
 
-
+// Включает режим выделения области.
 export function enableCropMode() {
   const canvas = document.querySelector('.viewer__canvas');
   if (!canvas) return;
@@ -32,14 +30,13 @@ export function enableCropMode() {
 
   rect = document.createElement('div');
   rect.className = 'crop-rect';
+
   overlay.appendChild(rect);
   wrapper.appendChild(overlay);
 
   wrapper.addEventListener('mousedown', onMouseDown);
   document.addEventListener('keydown', onKeyDown);
-
 }
-
 
 function onKeyDown(e) {
   if (e.key === 'Escape') {
@@ -48,9 +45,9 @@ function onKeyDown(e) {
   }
 }
 
-
 function onMouseDown(e) {
   e.preventDefault();
+
   const rectWrapper = wrapper.getBoundingClientRect();
   const scale = getRenderScale();
 
@@ -61,7 +58,6 @@ function onMouseDown(e) {
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 }
-
 
 function onMouseMove(e) {
   const rectWrapper = wrapper.getBoundingClientRect();
@@ -83,7 +79,6 @@ function onMouseMove(e) {
   });
 }
 
-
 function onMouseUp() {
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
@@ -101,31 +96,29 @@ function onMouseUp() {
     return;
   }
 
-  const { crop01, cropPx } = domCropToImageCrop(domCrop);
+  const { crop01 } = domCropToImageCrop(domCrop);
 
-  document.dispatchEvent(
-    new CustomEvent('cropSelected', {
-      detail: {
-        fieldId: cropState.fieldId,
-        page: cropState.page,
-        crop: crop01,   // 0..1
-      },
-    })
-  );
+  document.dispatchEvent(new CustomEvent('cropSelected', {
+    detail: {
+      fieldId: cropState.fieldId,
+      page: cropState.page,
+      crop: crop01,
+    },
+  }));
 
   cleanup();
 }
 
+// Переводит область из DOM в координаты изображения и 0..1.
 function domCropToImageCrop(domCrop) {
   const img = document.querySelector('.viewer__page');
   if (!img) return { crop01: domCrop, cropPx: domCrop };
 
   const scale = getRenderScale();
-
   const rectImg = img.getBoundingClientRect();
+
   const displayedW = rectImg.width / scale;
   const displayedH = rectImg.height / scale;
-
   const naturalW = img.naturalWidth || displayedW;
   const naturalH = img.naturalHeight || displayedH;
 
@@ -153,14 +146,13 @@ function getRenderScale() {
   return (viewerState.baseScale || 1) * (viewerState.zoom || 1);
 }
 
-
+// Удаляет рамку и обработчики мыши.
 function cleanup() {
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
   document.removeEventListener('keydown', onKeyDown);
 
   if (wrapper) wrapper.removeEventListener('mousedown', onMouseDown);
-
   if (overlay) overlay.remove();
 
   overlay = null;

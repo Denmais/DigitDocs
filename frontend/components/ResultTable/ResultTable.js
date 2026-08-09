@@ -1,150 +1,226 @@
-console.log('ResultTable loaded');
+import { API_CONFIG } from '../../constants/api.js';
 
-function escapeTsvCell(value) {
+
+// Проверяет, есть ли данные с нескольких страниц.
+function hasSeveralPages(rows) {
+  const pages = new Set(
+    rows
+      .map((row) => row?.page)
+      .filter((page) => Number.isInteger(page))
+  );
+
+  return pages.size > 1;
+}
+
+
+// Экранирует текст перед вставкой в HTML.
+function escapeHtml(value) {
   if (value == null) return '';
-  let s = String(value);
 
-  s = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-  s = s.replace(/\t/g, ' ');
-
-  if (s.includes('"') || s.includes('\n')) {
-    s = `"${s.replace(/"/g, '""')}"`;
-  }
-
-  return s;
-}
-
-function buildTsvString(tableRows) {
-  const header = ['Параметр', 'Значение'];
-
-  const lines = [
-    'sep=\t',
-    header.map(escapeTsvCell).join('\t'),
-    ...(tableRows || []).map((row) => {
-      const label = row?.label ?? '';
-      const value = row?.display_value ?? row?.value ?? '';
-      return [label, value].map(escapeTsvCell).join('\t');
-    }),
-  ];
-
-  return lines.join('\r\n');
-}
-
-function encodeUtf16LEWithBom(str) {
-  const out = new Uint8Array(2 + str.length * 2);
-  out[0] = 0xff;
-  out[1] = 0xfe;
-
-  for (let i = 0; i < str.length; i++) {
-    const codeUnit = str.charCodeAt(i);
-    out[2 + i * 2] = codeUnit & 0xff;
-    out[2 + i * 2 + 1] = (codeUnit >> 8) & 0xff;
-  }
-
-  return out;
-}
-
-function downloadExcelFile({ filename, contentUtf16leBytes }) {
-  const blob = new Blob([contentUtf16leBytes], {
-    type: 'text/tab-separated-values;charset=utf-16le',
-  });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 
+// Рисует итоговую таблицу.
 export function renderResultTable(container, data) {
-  console.log('renderResultTable called', data);
+  const rows = data.table || [];
+  const showPage = hasSeveralPages(rows);
 
   container.innerHTML = `
-    <div class="result">
-      <div class="result__card">
-        <table class="result__table">
-          <thead>
+    <div class="result__card">
+      <table class="result__table">
+        <thead>
+          <tr>
+            ${showPage ? '<th>СТРАНИЦА</th>' : ''}
+            <th>ПАРАМЕТР</th>
+            <th>ИТОГОВОЕ ЗНАЧЕНИЕ</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${rows.map((row) => `
             <tr>
-              <th>ПАРАМЕТР</th>
-              <th>ИТОГОВОЕ ЗНАЧЕНИЕ</th>
+              ${showPage ? `<td>${Number(row.page) + 1}</td>` : ''}
+              <td>${escapeHtml(row.label ?? '')}</td>
+              <td>${escapeHtml(row.display_value ?? row.value ?? '')}</td>
             </tr>
-          </thead>
-          <tbody>
-            ${(data.table || []).map(row => `
-              <tr class="${row.valid ? '' : 'row--invalid'}">
-                <td>${row.label}</td>
-                <td>${row.display_value ?? row.value}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+          `).join('')}
+        </tbody>
+      </table>
+
+      ${rows.length === 0 ? `
+        <div class="result__empty">
+          Нет распознанных данных
+        </div>
+      ` : ''}
 
       <div class="result__actions">
-        <button 
-          id="downloadXlsx" 
+        <button
+          id="downloadXlsx"
           type="button"
-          class="accent__btn accent__btn--wide">
+          class="accent__btn accent__btn--wide"
+        >
           Скачать XLSX
         </button>
 
-        <button id="publishBI" disabled class="accent__btn accent__btn--outline">
+        <button
+          id="publishBI"
+          type="button"
+          class="accent__btn accent__btn--outline"
+        >
           Опубликовать в BI
         </button>
       </div>
     </div>
   `;
 
-  const btn = container.querySelector('#downloadXlsx');
+  const xlsxButton = container.querySelector('#downloadXlsx');
+  const biButton = container.querySelector('#publishBI');
 
-  if (btn) {
-    btn.onclick = async () => {
-      try {
-        const taskId = localStorage.getItem('task_id');
-        if (!taskId) throw new Error('task_id не найден в localStorage');
+  if (xlsxButton) {
+    xlsxButton.onclick = () => downloadXlsx(xlsxButton);
+  }
 
-        console.log('CLICK XLSX', taskId);
+  if (biButton) {
+    biButton.onclick = () => publishToBI(biButton);
+  }
+}
 
-        btn.disabled = true;
-        btn.textContent = 'Формирование...';
 
-        const params = new URLSearchParams({ task_id: taskId });
+// Скачивает XLSX.
+async function downloadXlsx(button) {
+  try {
+    const taskId = localStorage.getItem('task_id');
 
-        const response = await fetch(`/api/excel?${params.toString()}`, {
-          method: 'GET'
-        });
+    if (!taskId) {
+      throw new Error('task_id не найден в localStorage');
+    }
 
-        if (!response.ok) {
-          throw new Error('Ошибка скачивания');
-        }
+    button.disabled = true;
+    button.textContent = 'Формирование...';
 
-        const blob = await response.blob();
+    const params = new URLSearchParams({
+      task_id: taskId,
+    });
 
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `result_${taskId}.xlsx`;
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EXCEL}?${params.toString()}`
+    );
 
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Ошибка скачивания');
+    }
 
-        window.URL.revokeObjectURL(url);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
 
-      } catch (err) {
-        console.error(err);
-        alert('Не удалось скачать файл');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Скачать XLSX';
+    link.href = url;
+    link.download = `result_${taskId}.xlsx`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+
+    alert(
+      err instanceof Error
+        ? err.message
+        : 'Не удалось скачать файл'
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Скачать XLSX';
+  }
+}
+
+
+// Создаёт BI-витрину и открывает dashboard Superset.
+async function publishToBI(button) {
+  const taskId = localStorage.getItem('task_id');
+
+  if (!taskId) {
+    alert('task_id не найден в localStorage');
+    return;
+  }
+
+  // Открываем вкладку сразу, иначе браузер может заблокировать popup после await.
+  const dashboardWindow = window.open('', '_blank');
+
+  try {
+    button.disabled = true;
+    button.textContent = 'Публикация...';
+
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BI_PUBLISH}`,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          task_id: taskId,
+        }),
       }
-    };
+    );
+
+    const text = await response.text().catch(() => '');
+
+    let result = {};
+
+    if (text) {
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error(`Backend вернул не JSON: ${text}`);
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        result?.detail ||
+        result?.error ||
+        text ||
+        'Не удалось опубликовать данные в BI'
+      );
+    }
+
+    if (!result.dashboard_url) {
+      throw new Error(
+        'Backend не вернул dashboard_url'
+      );
+    }
+
+    if (dashboardWindow) {
+      dashboardWindow.location.href = result.dashboard_url;
+    } else {
+      window.location.href = result.dashboard_url;
+    }
+  } catch (err) {
+    if (dashboardWindow) {
+      dashboardWindow.close();
+    }
+
+    console.error(err);
+
+    alert(
+      err instanceof Error
+        ? err.message
+        : 'Не удалось опубликовать данные в BI'
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Опубликовать в BI';
   }
 }

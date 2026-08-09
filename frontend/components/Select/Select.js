@@ -11,20 +11,20 @@ export class CustomSelect {
     this.defaultId = defaultId;
   }
 
+  // Рисует список категорий.
   render() {
     const htmlOptions = this.data
       .map(({ id, title }) => {
-        const isSelected = this.defaultId !== null && String(id) === String(this.defaultId);
-        return `<li data-value="${id}" class="${isSelected ? 'selected' : ''}">${title}</li>`;
+        const selected = this.defaultId !== null && String(id) === String(this.defaultId);
+        return `<li data-value="${id}" class="${selected ? 'selected' : ''}">${title}</li>`;
       })
       .join('');
 
-    const selectedText =
-      this.defaultId !== null
-        ? (this.data.find((item) => String(item.id) === String(this.defaultId))?.title || this.placeholder)
-        : this.placeholder;
+    const selectedText = this.defaultId !== null
+      ? this.data.find((item) => String(item.id) === String(this.defaultId))?.title || this.placeholder
+      : this.placeholder;
 
-    const html = `
+    this.rootEl.innerHTML = `
       <button type="button" class="select-button">
         <span class="select-current">${selectedText}</span>
         <img src="./data/images/arrow-down.svg" alt="" class="arrow">
@@ -35,8 +35,6 @@ export class CustomSelect {
       </ul>
     `;
 
-    this.rootEl.innerHTML = html;
-
     this.button = this.rootEl.querySelector('.select-button');
     this.dropdown = this.rootEl.querySelector('.select-dropdown');
     this.current = this.rootEl.querySelector('.select-current');
@@ -44,6 +42,7 @@ export class CustomSelect {
     this.init();
   }
 
+  // Открывает список и обрабатывает выбор.
   init() {
     this.button.addEventListener('click', () => {
       this.dropdown.toggleAttribute('hidden');
@@ -51,27 +50,24 @@ export class CustomSelect {
     });
 
     this.dropdown.addEventListener('click', (e) => {
-      if (e.target.tagName === 'LI') {
-        const id = String(e.target.dataset.value);
-        const title = e.target.textContent.trim();
+      if (e.target.tagName !== 'LI') return;
 
-        this.current.textContent = title;
+      const id = String(e.target.dataset.value);
+      const title = e.target.textContent.trim();
 
-        this.dropdown.querySelectorAll('li').forEach((li) => li.classList.remove('selected'));
-        e.target.classList.add('selected');
+      this.current.textContent = title;
+      this.dropdown.querySelectorAll('li').forEach((li) => li.classList.remove('selected'));
+      e.target.classList.add('selected');
 
-        this.dropdown.hidden = true;
-        this.button.classList.remove('open');
+      this.dropdown.hidden = true;
+      this.button.classList.remove('open');
 
-        localStorage.setItem('selectedCategoryId', id);
-        localStorage.setItem('selectedCategoryTitle', title);
+      localStorage.setItem('selectedCategoryId', id);
+      localStorage.setItem('selectedCategoryTitle', title);
 
-        this.rootEl.dispatchEvent(
-          new CustomEvent('selectChange', {
-            detail: { id, title },
-          })
-        );
-      }
+      this.rootEl.dispatchEvent(new CustomEvent('selectChange', {
+        detail: { id, title },
+      }));
     });
   }
 }

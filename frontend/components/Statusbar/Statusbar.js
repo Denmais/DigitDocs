@@ -1,29 +1,20 @@
-
 import { ROOT_STATUSBAR } from '../../constants/root.js';
 import { createStorageObserver } from '../../utils/storageObserver.js';
 
 class Statusbar {
   constructor() {
-
     this.storageObserver = createStorageObserver();
     this.initObserver();
-
-
     this.isHidden = true;
   }
 
-
+  // Перерисовывает статус при изменении файла или категории.
   initObserver() {
-    this.storageObserver.on('uploadedFile', () => {
-      this.render();
-    });
-
-    this.storageObserver.on('selectedCategory', () => {
-      this.render();
-    });
+    this.storageObserver.on('uploadedFile', () => this.render());
+    this.storageObserver.on('selectedCategory', () => this.render());
   }
 
-
+  // Прячет информацию о файле.
   hide() {
     const header = document.querySelector('.data-selection__header');
     if (header) {
@@ -32,7 +23,7 @@ class Statusbar {
     }
   }
 
-
+  // Показывает информацию о файле.
   show() {
     const header = document.querySelector('.data-selection__header');
     if (header) {
@@ -41,32 +32,19 @@ class Statusbar {
     }
   }
 
-
+  // Рисует информацию о файле и шаги обработки.
   render() {
-
-    const fileName =
-      localStorage.getItem('uploadedFile') || 'Ваш документ';
-
-    const category =
-      localStorage.getItem('selectedCategoryTitle') || 'Не выбрана';
-
+    const fileName = localStorage.getItem('uploadedFile') || 'Ваш документ';
+    const category = localStorage.getItem('selectedCategoryTitle') || 'Не выбрана';
     const hiddenClass = this.isHidden ? 'hidden' : '';
-
- 
-    const activeStep =
-      Number(localStorage.getItem('activeStep')) || 1;
-
-
+    const activeStep = Number(localStorage.getItem('activeStep')) || 1;
     const isActive = (step) => step <= activeStep;
 
-
-    const html = `
+    ROOT_STATUSBAR.innerHTML = `
       <div class="data-selection__header ${hiddenClass}">
         <span class="data-selection__title">
           Загруженный файл: <strong>${fileName}</strong>
-          <span>
-            Категория: <strong>${category}</strong>
-          </span>
+          <span>Категория: <strong>${category}</strong></span>
         </span>
       </div>
 
@@ -92,11 +70,8 @@ class Statusbar {
         </li>
       </ul>
     `;
-
-    ROOT_STATUSBAR.innerHTML = html;
   }
 }
-
 
 const statusbarElement = new Statusbar();
 statusbarElement.render();

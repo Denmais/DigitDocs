@@ -1,0 +1,321 @@
+x-superset-common: &superset-common
+  image: invoice-superset:6.0.0
+
+  build:
+    context: .
+    dockerfile_inline: |
+      FROM apache/superset:6.0.0
+
+      USER root
+
+      RUN . /app/.venv/bin/activate && \
+          uv pip install --no-cache \
+            psycopg2-binary \
+            "clickhouse-connect>=0.13.0"
+
+      USER superset
+
+  environment:
+    SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+    SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?Set SUPERSET_SECRET_KEY in .env}
+
+    SUPERSET_DB_HOST: superset-db
+    SUPERSET_DB_PORT: "5432"
+    SUPERSET_DB_NAME: ${SUPERSET_DB_NAME:-superset}
+    SUPERSET_DB_USER: ${SUPERSET_DB_USER:-superset}
+    SUPERSET_DB_PASSWORD: ${SUPERSET_DB_PASSWORD:?Set SUPERSET_DB_PASSWORD in .env}
+
+    SUPERSET_REDIS_HOST: superset-redis
+    SUPERSET_REDIS_PORT: "6379"
+
+    SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
+    SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:?Set SUPERSET_ADMIN_PASSWORD in .env}
+    SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@example.com}
+
+  volumes:
+    - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    - superset_home:/app/superset_home
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3
+    container_name: invoice_clickhouse
+    restart: unless-stopped
+
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DATABASE:-analytics}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-invoice_app}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+
+    ports:
+      - "127.0.0.1:${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+      - "127.0.0.1:${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
+
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          clickhouse-client
+          --host 127.0.0.1
+          --port 9000
+          --user "$$CLICKHOUSE_USER"
+          --password "$$CLICKHOUSE_PASSWORD"
+          --query "SELECT 1" >/dev/null 2>&1
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  mongodb:
+    image: mongo:8.2.12
+    container_name: invoice_mongodb
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+      MONGO_APP_USER: ${MONGODB_USER}
+      MONGO_APP_PASSWORD: ${MONGODB_PASSWORD}
+
+    ports:
+      - "127.0.0.1:${MONGODB_PORT_PUBLIC:-27017}:27017"
+
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/001-init.js:ro
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet
+          --host 127.0.0.1
+          --port 27017
+          --username "$$MONGO_INITDB_ROOT_USERNAME"
+          --password "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin
+          --eval "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 2)"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: invoice_minio
+    restart: unless-stopped
+
+    command: server /data --console-address ":9001"
+
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT:-9100}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9101}:9001"
+
+    volumes:
+      - minio_data:/data
+
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  superset-db:
+    image: postgres:15
+    container_name: invoice_superset_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${SUPERSET_DB_NAME:-superset}
+      POSTGRES_USER: ${SUPERSET_DB_USER:-superset}
+      POSTGRES_PASSWORD: ${SUPERSET_DB_PASSWORD:?Set SUPERSET_DB_PASSWORD in .env}
+
+    volumes:
+      - superset_db_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          pg_isready
+          -U "$$POSTGRES_USER"
+          -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  superset-redis:
+    image: redis:7
+    container_name: invoice_superset_redis
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  superset-init:
+    <<: *superset-common
+    container_name: invoice_superset_init
+    restart: "no"
+
+    depends_on:
+      superset-db:
+        condition: service_healthy
+      superset-redis:
+        condition: service_healthy
+
+    command:
+      - /bin/sh
+      - -c
+      - |
+        superset db upgrade
+
+        superset fab create-admin \
+          --username "$${SUPERSET_ADMIN_USERNAME}" \
+          --firstname Admin \
+          --lastname User \
+          --email "$${SUPERSET_ADMIN_EMAIL}" \
+          --password "$${SUPERSET_ADMIN_PASSWORD}" || true
+
+        superset init
+
+  superset:
+    <<: *superset-common
+    container_name: invoice_superset
+    restart: unless-stopped
+
+    depends_on:
+      superset-db:
+        condition: service_healthy
+      superset-redis:
+        condition: service_healthy
+      superset-init:
+        condition: service_completed_successfully
+      clickhouse:
+        condition: service_healthy
+
+    ports:
+      - "${SUPERSET_PORT:-8088}:8088"
+
+    command:
+      - /bin/sh
+      - -c
+      - superset run -h 0.0.0.0 -p 8088
+
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen(
+          'http://127.0.0.1:8088/health',
+          timeout=3
+          )
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: invoice_app
+    restart: unless-stopped
+
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    environment:
+      PORT: "8000"
+      SQLALCHEMY_DATABASE_URL: sqlite:////app/data/sql_app.db
+
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE:-analytics}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-invoice_app}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
+      CLICKHOUSE_SECURE: "false"
+
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: "27017"
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD}
+
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-invoice-files}
+      MINIO_EXPIRATION_DAYS: ${MINIO_EXPIRATION_DAYS:-20}
+
+      SUPERSET_URL: http://superset:8088
+      SUPERSET_PUBLIC_URL: ${SUPERSET_PUBLIC_URL:-http://localhost:8088}
+      SUPERSET_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
+      SUPERSET_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:?Set SUPERSET_ADMIN_PASSWORD in .env}
+
+      SUPERSET_CLICKHOUSE_HOST: clickhouse
+      SUPERSET_CLICKHOUSE_PORT: "8123"
+      SUPERSET_CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE:-analytics}
+      SUPERSET_CLICKHOUSE_USER: ${CLICKHOUSE_USER:-invoice_app}
+      SUPERSET_CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
+
+    ports:
+      - "${APP_PORT:-8000}:8000"
+
+    volumes:
+      - ./data:/app/data
+      - ./frontend:/app/frontend:ro
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen(
+          'http://127.0.0.1:8000/openapi.json',
+          timeout=3
+          )
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+    stop_grace_period: 30s
+
+volumes:
+  clickhouse_data:
+  clickhouse_logs:
+  mongo_data:
+  minio_data:
+  superset_db_data:
+  superset_home:

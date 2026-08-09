@@ -4,37 +4,32 @@ import { API_CONFIG } from '../../constants/api.js';
 export class UploadButton {
   constructor({ rootId }) {
     this.rootEl = document.getElementById(rootId);
-
-
     this.isFirstUpload = true;
-
-
     this.selectedCategoryId = null;
     this.selectedCategoryTitle = null;
 
     this.setupCategoryListener();
-
     this.checkSavedCategory();
   }
 
-
+  // Слушает выбор категории.
   setupCategoryListener() {
     const selectRoot = document.getElementById('doc-type');
 
     if (selectRoot) {
       selectRoot.addEventListener('selectChange', (e) => {
-        if (e.detail?.id) {
-          this.selectedCategoryId = e.detail.id;
-          this.selectedCategoryTitle = e.detail.title;
+        if (!e.detail?.id) return;
 
-          localStorage.setItem('selectedCategoryId', e.detail.id);
-          localStorage.setItem('selectedCategoryTitle', e.detail.title);
-        }
+        this.selectedCategoryId = e.detail.id;
+        this.selectedCategoryTitle = e.detail.title;
+
+        localStorage.setItem('selectedCategoryId', e.detail.id);
+        localStorage.setItem('selectedCategoryTitle', e.detail.title);
       });
     }
   }
 
-
+  // Восстанавливает выбранную категорию из localStorage.
   checkSavedCategory() {
     const savedId = (localStorage.getItem('selectedCategoryId') || '').trim();
     const savedTitle = (localStorage.getItem('selectedCategoryTitle') || '').trim();
@@ -43,11 +38,12 @@ export class UploadButton {
     if (savedTitle) this.selectedCategoryTitle = savedTitle;
   }
 
+  // Рисует область загрузки.
   render() {
-    const html = `
-      <p class="upload-zone__text">
-        Перетащите файл .pdf<br>или загрузите его с компьютера
-      </p>
+    this.rootEl.innerHTML = `
+      <div class="upload-zone__text">
+        Перетащите файл .pdf или загрузите его с компьютера
+      </div>
 
       <input
         class="upload-zone__input"
@@ -63,28 +59,23 @@ export class UploadButton {
       </button>
     `;
 
-    this.rootEl.innerHTML = html;
-
     this.text = this.rootEl.querySelector('.upload-zone__text');
     this.button = this.rootEl.querySelector('#uploadBtn');
     this.fileInput = this.rootEl.querySelector('#fileInput');
-
     this.processingButton = document.querySelector('#processing-btn');
     this.processingButton.classList.add('form__group--hidden');
 
     this.init();
   }
 
-
+  // Подключает кнопку загрузки и drag-and-drop.
   init() {
     const canPickFile = () => {
-      const normalize = (s) =>
-        (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
-
+      const normalize = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
       const currentTitle = this.#getCurrentSelectTitle();
-      const PLACEHOLDER = 'выберите категорию';
+      const placeholder = 'выберите категорию';
 
-      return normalize(currentTitle) && normalize(currentTitle) !== normalize(PLACEHOLDER);
+      return normalize(currentTitle) && normalize(currentTitle) !== normalize(placeholder);
     };
 
     this.button.addEventListener('click', () => {
@@ -92,6 +83,7 @@ export class UploadButton {
         alert('Сначала выберите тип документа');
         return;
       }
+
       this.fileInput.click();
     });
 
@@ -110,8 +102,10 @@ export class UploadButton {
         alert('Сначала выберите тип документа');
         return;
       }
+
       e.preventDefault();
       this.rootEl.classList.remove('dragover');
+
       const file = e.dataTransfer.files[0];
       if (file) this.#handleFile(file);
     });
@@ -122,11 +116,13 @@ export class UploadButton {
         this.fileInput.value = '';
         return;
       }
+
       const file = this.fileInput.files[0];
       if (file) this.#handleFile(file);
     });
   }
 
+  // Загружает выбранный файл.
   async #handleFile(file) {
     this.#updateUI(file);
 
@@ -141,71 +137,59 @@ export class UploadButton {
     }
   }
 
+  // Проверяет PDF и отправляет его на backend.
   async #sendFile(file) {
-  try {
-    this.text.innerHTML = '⏳ Отправка файла...';
-    this.button.disabled = true;
+    try {
+      this.text.innerHTML = '⏳ Отправка файла...';
+      this.button.disabled = true;
 
-    const currentTitle = this.#getCurrentSelectTitle();
+      const currentTitle = this.#getCurrentSelectTitle();
+      const placeholder = 'выберите категорию';
 
-    const PLACEHOLDER = 'выберите категорию';
+      if (!currentTitle || currentTitle === placeholder) {
+        localStorage.removeItem('selectedCategoryId');
+        localStorage.removeItem('selectedCategoryTitle');
+        this.selectedCategoryId = null;
+        this.selectedCategoryTitle = null;
+        throw new Error('Сначала выберите тип документа');
+      }
 
-    if (!currentTitle || currentTitle === PLACEHOLDER) {
-      localStorage.removeItem('selectedCategoryId');
-      localStorage.removeItem('selectedCategoryTitle');
-      this.selectedCategoryId = null;
-      this.selectedCategoryTitle = null;
+      this.selectedCategoryTitle = currentTitle;
 
-      throw new Error('Сначала выберите тип документа');
+      if (file.type !== 'application/pdf') {
+        throw new Error('Поддерживается только PDF');
+      }
+
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error('Файл больше 10MB');
+      }
+
+      const uploadResponse = await this.#uploadToServer(file, this.selectedCategoryTitle);
+
+      this.processingButton.classList.remove('form__group--hidden');
+
+      localStorage.setItem('upload_id', uploadResponse.upload_id);
+      localStorage.setItem('uploadedFile', uploadResponse.filename);
+      localStorage.setItem('uploadedFileMeta', JSON.stringify(uploadResponse));
+
+      this.text.innerHTML = `
+        ✅ Файл загружен:<br>
+        <strong>${uploadResponse.filename}</strong><br>
+        <small>Категория: ${uploadResponse.document_type.title}</small>
+      `;
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      this.button.disabled = false;
     }
-
-    this.selectedCategoryTitle = currentTitle;
-
-    if (file.type !== 'application/pdf') {
-      throw new Error('Поддерживается только PDF');
-    }
-
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      throw new Error('Файл больше 10MB');
-    }
-
-    const uploadResponse = await this.#uploadToServer(file, this.selectedCategoryTitle);
-
-    this.processingButton.classList.remove('form__group--hidden');
-
-    localStorage.setItem('upload_id', uploadResponse.upload_id);
-    localStorage.setItem('uploadedFile', uploadResponse.filename);
-    localStorage.setItem('uploadedFileMeta', JSON.stringify(uploadResponse));
-
-    this.text.innerHTML = `
-      ✅ Файл загружен:<br>
-      <strong>${uploadResponse.filename}</strong><br>
-      <small>Категория: ${uploadResponse.document_type.title}</small>
-    `;
-  } catch (err) {
-    alert(err.message);
-  } finally {
-    this.button.disabled = false;
   }
-}
 
-   async #uploadToServer(file, typeTitle) {
+  // Отправляет multipart/form-data на /api/upload.
+  async #uploadToServer(file, typeTitle) {
     const formData = new FormData();
     formData.append('type_id', typeTitle);
     formData.append('file', file);
-
-    console.log('[UPLOAD] url:', `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`);
-    console.log('[UPLOAD] type_id:', typeTitle);
-    console.log('[UPLOAD] file:', { name: file.name, size: file.size, type: file.type });
-
-    for (const [k, v] of formData.entries()) {
-      if (v instanceof File) {
-        console.log(`[UPLOAD] formData ${k}: File(name=${v.name}, size=${v.size}, type=${v.type})`);
-      } else {
-        console.log(`[UPLOAD] formData ${k}:`, v);
-      }
-    }
 
     const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`, {
       method: 'POST',
@@ -214,19 +198,14 @@ export class UploadButton {
 
     const text = await response.text().catch(() => '');
 
-    console.log('[UPLOAD] status:', response.status);
-    console.log('[UPLOAD] response headers:', Object.fromEntries(response.headers.entries()));
-    console.log('[UPLOAD] response text:', text);
-
     if (!response.ok) {
       throw new Error(`Upload failed: ${response.status} ${text}`);
     }
 
-    // если это json
     return text ? JSON.parse(text) : {};
   }
 
-
+  // Меняет текст и кнопку после выбора файла.
   #updateUI(file) {
     const name = file.name.length > 30 ? file.name.slice(0, 27) + '...' : file.name;
 
