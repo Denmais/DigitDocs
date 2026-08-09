@@ -8,27 +8,27 @@
 
 ```mermaid
 flowchart TD
-    A[Пользователь загружает PDF] --> B[FastAPI]
-    B --> C[MinIO: исходный PDF]
-    B --> D[SQLite: информация о загрузке]
-    B --> E{Режим обработки}
+    A["Пользователь загружает PDF"] --> B["FastAPI"]
+    B --> C["MinIO: исходный PDF"]
+    B --> D["SQLite: информация о загрузке"]
+    B --> E{"Режим обработки"}
 
-    E -->|Ручной| F[Пользователь выбирает область]
-    E -->|Автоматический| G[Берём auto_crop из MongoDB]
+    E -->|Ручной| F["Пользователь выбирает область"]
+    E -->|Автоматический| G["Берём auto_crop из MongoDB"]
 
-    F --> H[OCR]
+    F --> H["OCR"]
     G --> H
 
-    H --> I[ClickHouse: analytics.extract_data]
+    H --> I["ClickHouse: analytics.extract_data"]
 
-    I --> J[Результат в интерфейсе]
-    I --> K[XLSX]
-    I --> L[VIEW analytics.bi_numeric_values]
+    I --> J["Результат в интерфейсе"]
+    I --> K["XLSX"]
+    I --> L["VIEW analytics.bi_numeric_values"]
 
-    L --> M[Apache Superset]
-    M --> N[Dataset]
-    N --> O[Графики по title]
-    O --> P[Dashboard]
+    L --> M["Apache Superset"]
+    M --> N["Dataset"]
+    N --> O["Графики по title"]
+    O --> P["Dashboard"]
 ```
 
 Если коротко:
@@ -313,13 +313,13 @@ auto_crop: {
 
 ```mermaid
 flowchart LR
-    A[PDF] --> B[Выбор страницы]
-    B --> C[Выбор поля]
-    C --> D[Выделение области]
-    D --> E[/api/extract-field]
-    E --> F[OCR]
-    F --> G[ClickHouse]
-    G --> H[Значение появляется в форме]
+    A["PDF"] --> B["Выбор страницы"]
+    B --> C["Выбор поля"]
+    C --> D["Выделение области"]
+    D --> E["/api/extract-field"]
+    E --> F["OCR"]
+    F --> G["ClickHouse"]
+    G --> H["Значение появляется в форме"]
 ```
 
 После заполнения полей пользователь нажимает:
@@ -344,13 +344,13 @@ Backend получает `auto_crop` из MongoDB, проверяет докум
 
 ```mermaid
 flowchart TD
-    A[PDF] --> B[Получаем auto_crop из MongoDB]
-    B --> C[Проверяем validation области]
-    C -->|Документ подходит| D[Берём crop полей]
-    C -->|Не подходит| E[validation_failed]
-    D --> F[OCR]
-    F --> G[ClickHouse]
-    G --> H[Итоговая таблица]
+    A["PDF"] --> B["Получаем auto_crop из MongoDB"]
+    B --> C["Проверяем validation области"]
+    C -->|Документ подходит| D["Берём crop полей"]
+    C -->|Не подходит| E["validation_failed"]
+    D --> F["OCR"]
+    F --> G["ClickHouse"]
+    G --> H["Итоговая таблица"]
 ```
 
 Каждая страница PDF обрабатывается отдельно.
@@ -403,18 +403,18 @@ POST /api/bi/publish
 
 ```mermaid
 flowchart TD
-    A[Опубликовать в BI] --> B[/api/bi/publish]
-    B --> C[create_mart.py]
-    C --> D[ClickHouse: bi_numeric_values]
-    C --> E[Superset REST API]
+    A["Опубликовать в BI"] --> B["/api/bi/publish"]
+    B --> C["create_mart.py"]
+    C --> D["ClickHouse: bi_numeric_values"]
+    C --> E["Superset REST API"]
 
-    E --> F[Database connection]
-    F --> G[Dataset]
-    G --> H[Chart по title]
-    H --> I[Dashboard]
+    E --> F["Database connection"]
+    F --> G["Dataset"]
+    G --> H["Chart по title"]
+    H --> I["Dashboard"]
 
-    I --> J[dashboard_url]
-    J --> K[Dashboard открывается в браузере]
+    I --> J["dashboard_url"]
+    J --> K["Dashboard открывается в браузере"]
 ```
 
 Например, если в ClickHouse есть:
@@ -515,25 +515,25 @@ POST /api/bi/publish
 
 ```mermaid
 flowchart TB
-    User[Пользователь]
+    User["Пользователь"]
 
-    subgraph App[Приложение]
-        Frontend[Frontend]
-        API[FastAPI]
-        OCR[OCR]
+    subgraph App["Приложение"]
+        Frontend["Frontend"]
+        API["FastAPI"]
+        OCR["OCR"]
     end
 
-    subgraph Storage[Хранилища]
-        SQLite[(SQLite)]
-        CH[(ClickHouse)]
-        Mongo[(MongoDB)]
-        MinIO[(MinIO)]
+    subgraph Storage["Хранилища"]
+        SQLite[("SQLite")]
+        CH[("ClickHouse")]
+        Mongo[("MongoDB")]
+        MinIO[("MinIO")]
     end
 
-    subgraph BI[Аналитика]
-        View[bi_numeric_values]
-        Superset[Apache Superset]
-        Dashboard[Dashboard]
+    subgraph BI["Аналитика"]
+        View["bi_numeric_values"]
+        Superset["Apache Superset"]
+        Dashboard["Dashboard"]
     end
 
     User --> Frontend
