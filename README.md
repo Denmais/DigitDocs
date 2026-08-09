@@ -377,29 +377,6 @@ exports/<upload_id>.xlsx
 
 Для BI используется Apache Superset.
 
-Кнопка:
-
-```text
-Опубликовать в BI
-```
-
-вызывает:
-
-```text
-POST /api/bi/publish
-```
-
-с текущим `task_id`.
-
-Дальше функция из `create_mart.py`:
-
-1. смотрит, какие числовые `title` есть у документа;
-2. авторизуется в Superset;
-3. находит или создаёт подключение к ClickHouse;
-4. находит или создаёт Dataset;
-5. создаёт Dashboard для типа документа;
-6. создаёт графики для числовых полей;
-7. возвращает ссылку на Dashboard.
 
 ```mermaid
 flowchart TD
@@ -417,22 +394,6 @@ flowchart TD
     J --> K["Dashboard открывается в браузере"]
 ```
 
-Например, если в ClickHouse есть:
-
-```text
-timestamp            title            numeric_value
-2026-08-01 10:00     tariff_kw_day    6.42
-2026-08-02 10:00     tariff_kw_day    6.45
-2026-08-03 10:00     tariff_kw_day    6.51
-```
-
-Superset фильтрует:
-
-```text
-title = tariff_kw_day
-```
-
-и строит временной график по `timestamp` и `numeric_value`.
 
 # Где что хранится
 
@@ -445,15 +406,6 @@ title = tariff_kw_day
 | PostgreSQL Superset | внутренние настройки Superset |
 | Redis | служебный кэш Superset |
 
-Если совсем коротко:
-
-```text
-SQLite     -> что происходит внутри приложения
-ClickHouse -> что было распознано
-MinIO      -> сами файлы
-MongoDB    -> как обрабатывать документ
-Superset   -> как показывать аналитику
-```
 
 # Запуск
 
@@ -496,19 +448,6 @@ POST /api/extract-field
 POST /api/collect
 GET  /api/excel
 POST /api/bi/publish
-```
-
-Коротко:
-
-```text
-/api/upload          -> загрузить документ
-/api/document-types  -> получить типы документов
-/api/process/status  -> подготовить ручной режим
-/api/process/auto    -> автоматическая обработка
-/api/extract-field   -> распознать выбранную область
-/api/collect         -> собрать итоговые значения
-/api/excel           -> скачать XLSX
-/api/bi/publish      -> создать или обновить BI в Superset
 ```
 
 # Итоговая схема
