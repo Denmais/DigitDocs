@@ -29,6 +29,7 @@ from database import (
     engine,
     get_clickhouse_client,
 )
+from mongo_forms import sync_forms_to_sqlite
 from schemas import UploadResponse
 from create_mart import create_mart
 from storage import ensure_storage, get_object
@@ -64,6 +65,13 @@ def get_clickhouse():
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     models.Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        sync_forms_to_sqlite(db)
+
+    finally:
+        db.close()
     get_clickhouse_client().command("SELECT 1")
     ensure_storage()
 

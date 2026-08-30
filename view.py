@@ -292,8 +292,12 @@ def compare_text(recognized: str, expected: str) -> tuple[bool, float]:
     return score >= 0.72, score
 
 
-def read_crop(image: Image.Image, crop_data: dict, psm: int = 6) -> tuple[Rectangle, str]:
-    """Распознаёт текст в заданном crop."""
+def read_crop(
+    image: Image.Image,
+    crop_data: dict,
+    psm: int = 6,
+    numeric: bool = False,
+) -> tuple[Rectangle, str]:
     crop = Rectangle.model_validate(crop_data)
     validate_rectangle(crop)
 
@@ -303,6 +307,7 @@ def read_crop(image: Image.Image, crop_data: dict, psm: int = 6) -> tuple[Rectan
         lang="rus+eng",
         psm=psm,
         oem=3,
+        numeric=numeric,
     ).strip()
 
     return crop, text
@@ -579,9 +584,27 @@ def process_auto_fields(
     recognized_fields = []
 
     for field_id, crop_config in auto_crop.get("fields", {}).items():
-        field = find_field(form_json, field_id)
-        crop, raw_text = read_crop(image, crop_config.get("crop", {}), psm=7)
-        value = clean_field_value(raw_text, field.get("type", "text"))
+        field = find_field(
+            form_json,
+            field_id,
+        )
+
+        numeric = (
+            field.get("type") == "number"
+            or field.get("id") == "document_date"
+        )
+
+        crop, raw_text = read_crop(
+            image,
+            crop_config.get("crop", {}),
+            psm=7,
+            numeric=numeric,
+        )
+
+        value = clean_field_value(
+            raw_text,
+            field.get("type", "text"),
+        )
 
         recognized_fields.append(
             {
@@ -624,18 +647,11 @@ def auto_process(db: Session, args, clickhouse, request=None):
     page_results = []
 
     for page in pages:
-        page_result = {
-            "page": page["page"],
-            "image_url": page["image_url"],
-            "status": None,
-            "validation": [],
-            "fields": [],
-        }
-
+        page_result = {"page": page["page"], "image_url": page["image_url"],
+                       "status": None, "validation": [],
+                       "fields": []}
         try:
-            image = Image.open(
-                BytesIO(read_bytes(page["storage_key"]))
-            ).convert("RGB")
+            image = Image.open(BytesIO(read_bytes(page["storage_key"]))).convert("RGB")
             valid, validation = validate_page(image, auto_crop)
             page_result["validation"] = validation
 

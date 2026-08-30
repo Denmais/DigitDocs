@@ -25,42 +25,15 @@ def bbox01_is_valid(bbox: BBox01) -> bool:
     )
 
 
-def preprocess_for_ocr(img: Image.Image) -> Image.Image:
-    gray = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY)
-    gray = cv2.resize(
-        gray,
-        None,
-        fx=3,
-        fy=3,
-        interpolation=cv2.INTER_CUBIC,
-    )
-
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
-
-    background = cv2.GaussianBlur(gray, (0, 0), 25)
-    norm = cv2.divide(gray, background, scale=255)
-    norm = cv2.bilateralFilter(norm, 7, 50, 50)
-
-    bw = cv2.adaptiveThreshold(
-        norm,
-        255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        41,
-        11,
-    )
-
-    kernel = np.ones((2, 2), np.uint8)
-    bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel)
-    return Image.fromarray(bw)
-
-
-def crop_by_bbox01(img: Image.Image, bbox: BBox01) -> Image.Image:
+def crop_by_bbox01(
+    img: Image.Image,
+    bbox: BBox01,
+) -> Image.Image:
     if not bbox01_is_valid(bbox):
         raise ValueError("bad bbox")
 
     width, height = img.size
+
     x0 = int(bbox.x * width)
     y0 = int(bbox.y * height)
     x1 = int((bbox.x + bbox.width) * width)
@@ -72,14 +45,110 @@ def crop_by_bbox01(img: Image.Image, bbox: BBox01) -> Image.Image:
     return img.crop((x0, y0, x1, y1))
 
 
+def preprocess_for_ocr(
+    img: Image.Image,
+) -> Image.Image:
+    """Подготовка без удаления мелких точек."""
+    gray = cv2.cvtColor(
+        np.array(img.convert("RGB")),
+        cv2.COLOR_RGB2GRAY,
+    )
+
+    # Сильно увеличиваем маленький crop.
+    gray = cv2.resize(
+        gray,
+        None,
+        fx=4,
+        fy=4,
+        interpolation=cv2.INTER_CUBIC,
+    )
+
+    clahe = cv2.createCLAHE(
+        clipLimit=2.0,
+        tileGridSize=(8, 8),
+    )
+
+    gray = clahe.apply(gray)
+
+    # Нормализация неравномерного фона.
+    background = cv2.GaussianBlur(
+        gray,
+        (0, 0),
+        21,
+    )
+
+    normalized = cv2.divide(
+        gray,
+        background,
+        scale=255,
+    )
+
+    # Otsu обычно лучше сохраняет точки,
+    # чем aggressive adaptive threshold.
+    _, bw = cv2.threshold(
+        normalized,
+        0,
+        255,
+        cv2.THRESH_BINARY + cv2.THRESH_OTSU,
+    )
+
+    # Tesseract не любит текст вплотную к границам.
+    bw = cv2.copyMakeBorder(
+        bw,
+        20,
+        20,
+        20,
+        20,
+        cv2.BORDER_CONSTANT,
+        value=255,
+    )
+
+    return Image.fromarray(bw)
+
+
 def ocr_pil_image(
     crop: Image.Image,
     lang: str = "rus+eng",
-    psm: int = 6,
+    psm: int = 7,
     oem: int = 3,
 ) -> str:
-    config = f"--psm {psm} --oem {oem}"
-    return pytesseract.image_to_string(crop, lang=lang, config=config)
+    processed = preprocess_for_ocr(crop)
+
+    config = (
+        f"--psm {psm} "
+        f"--oem {oem} "
+        "-c preserve_interword_spaces=1"
+    )
+
+    return pytesseract.image_to_string(
+        processed,
+        lang=lang,
+        config=config,
+    ).strip()
+
+
+def ocr_numeric_image(
+    crop: Image.Image,
+    psm: int = 7,
+) -> str:
+    """OCR для чисел, сумм и дат."""
+    processed = preprocess_for_ocr(crop)
+
+    config = (
+        f"--psm {psm} "
+        "--oem 3 "
+        "-c tessedit_char_whitelist=0123456789.,- "
+        "-c load_system_dawg=0 "
+        "-c load_freq_dawg=0 "
+        "-c preserve_interword_spaces=1"
+    )
+
+    return pytesseract.image_to_string(
+        processed,
+        # Для одних цифр русский словарь не нужен.
+        lang="eng",
+        config=config,
+    ).strip()
 
 
 def ocr_on_image_with_bbox01(
@@ -87,14 +156,23 @@ def ocr_on_image_with_bbox01(
     bbox: BBox01,
     *,
     lang: str = "rus+eng",
-    psm: int = 6,
+    psm: int = 7,
     oem: int = 3,
+    numeric: bool = False,
 ) -> str:
-    print(bbox)
-    crop = crop_by_bbox01(img, bbox)
-    processed_crop = preprocess_for_ocr(crop)
+    crop = crop_by_bbox01(
+        img,
+        bbox,
+    )
+
+    if numeric:
+        return ocr_numeric_image(
+            crop,
+            psm=psm,
+        )
+
     return ocr_pil_image(
-        processed_crop,
+        crop,
         lang=lang,
         psm=psm,
         oem=oem,

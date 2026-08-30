@@ -4,6 +4,8 @@ from urllib.parse import quote
 
 import requests
 
+from mongo_forms import get_form
+
 
 SUPERSET_URL = os.getenv(
     "SUPERSET_URL",
@@ -100,8 +102,13 @@ class SupersetClient:
         use_auth=True,
         **kwargs,
     ):
-        if use_auth and not self.session.headers.get("Authorization"):
-            raise RuntimeError("Superset client is not authorized")
+        if (
+            use_auth
+            and not self.session.headers.get("Authorization")
+        ):
+            raise RuntimeError(
+                "Superset client is not authorized"
+            )
 
         response = self.session.request(
             method,
@@ -113,7 +120,8 @@ class SupersetClient:
         if not response.ok:
             raise RuntimeError(
                 f"Superset {method} {path}: "
-                f"{response.status_code} {response.text}"
+                f"{response.status_code} "
+                f"{response.text}"
             )
 
         if not response.text:
@@ -134,7 +142,7 @@ class SupersetClient:
         return data.get("result", [])
 
 
-# Берёт поля текущего типа документа из BI-витрины.
+# Берёт числовые поля текущего документа.
 def get_document_fields(
     clickhouse,
     task_id: str,
@@ -186,6 +194,67 @@ def get_document_fields(
     return rows[0]["document_type"], rows
 
 
+# Берёт правило группировки из MongoDB.
+def get_group_by(document_type: str) -> str:
+    form = get_form(document_type)
+    bi = form.get("bi")
+
+    if not isinstance(bi, dict):
+        raise ValueError(
+            f"Для {document_type} не настроен блок bi"
+        )
+
+    group_by = bi.get("group_by")
+
+    if not group_by:
+        raise ValueError(
+            f"Для {document_type} не настроен bi.group_by"
+        )
+
+    field_ids = {
+        field.get("id")
+        for field in form.get("fields", [])
+    }
+
+    if group_by not in field_ids:
+        raise ValueError(
+            f"Поле группировки {group_by!r} "
+            f"не найдено в форме {document_type}"
+        )
+
+    return group_by
+
+
+# Проверяет, что OCR распознал поле группировки.
+def validate_group_value(
+    clickhouse,
+    task_id: str,
+    group_by: str,
+) -> None:
+    result = clickhouse.query(
+        """
+        SELECT count()
+        FROM analytics.extract_data
+        WHERE
+            upload_id = {upload_id:String}
+            AND title = {group_by:String}
+            AND value != ''
+        """,
+        parameters={
+            "upload_id": task_id,
+            "group_by": group_by,
+        },
+    )
+
+    count = result.result_rows[0][0]
+
+    if count == 0:
+        raise ValueError(
+            f"Не найдено значение поля группировки: "
+            f"{group_by}"
+        )
+
+
 # Собирает SQLAlchemy URI ClickHouse для Superset.
 def clickhouse_uri() -> str:
     user = quote(
@@ -231,7 +300,7 @@ def ensure_database(
     return data["id"]
 
 
-# Ищет или создаёт Dataset для нашей ClickHouse VIEW.
+# Ищет или создаёт Dataset для ClickHouse VIEW.
 def ensure_dataset(
     client: SupersetClient,
     database_id: int,
@@ -271,7 +340,7 @@ def ensure_dataset(
         json={},
     )
 
-    configure_timestamp(
+    configure_group_date(
         client,
         dataset_id,
         database_id,
@@ -280,8 +349,8 @@ def ensure_dataset(
     return dataset_id
 
 
-# Помечает timestamp как временную колонку.
-def configure_timestamp(
+# Помечает group_date как временную колонку.
+def configure_group_date(
     client: SupersetClient,
     dataset_id: int,
     database_id: int,
@@ -289,20 +358,22 @@ def configure_timestamp(
     info = client.request(
         "GET",
         f"/api/v1/dataset/{dataset_id}",
-    ).get("result", {})
+    ).get(
+        "result",
+        {},
+    )
 
     columns = []
 
     for column in info.get("columns", []):
+        column_name = column["column_name"]
+
         columns.append(
             {
                 "id": column["id"],
-                "column_name": column["column_name"],
+                "column_name": column_name,
                 "type": column.get("type"),
-                "is_dttm": (
-                    column["column_name"]
-                    == "timestamp"
-                ),
+                "is_dttm": column_name == "group_date",
                 "filterable": True,
                 "groupby": True,
             }
@@ -315,7 +386,7 @@ def configure_timestamp(
             "database_id": database_id,
             "table_name": DATASET_TABLE,
             "schema": DATASET_SCHEMA,
-            "main_dttm_col": "timestamp",
+            "main_dttm_col": "group_date",
             "columns": columns,
         },
     )
@@ -350,22 +421,27 @@ def ensure_dashboard(
 def chart_params(
     dataset_id: int,
     document_type: str,
+    group_by: str,
     field: dict,
 ) -> dict:
     return {
         "datasource": f"{dataset_id}__table",
         "viz_type": "echarts_timeseries_bar",
-        "x_axis": "timestamp",
+
+        # Ось X теперь берётся из документа.
+        "x_axis": "group_date",
         "time_range": "No filter",
         "time_grain_sqla": "P1D",
 
-        # На первом этапе используем AVG для всех числовых полей.
-        # Позже агрегацию можно хранить в Mongo для каждого title.
+        # Пока AVG для всех числовых полей.
         "metrics": [
             {
                 "expressionType": "SQL",
                 "sqlExpression": "AVG(numeric_value)",
-                "label": field["ru_title"] or field["title"],
+                "label": (
+                    field["ru_title"]
+                    or field["title"]
+                ),
             }
         ],
 
@@ -384,6 +460,15 @@ def chart_params(
                 "comparator": field["title"],
                 "clause": "WHERE",
             },
+
+            # Оставляем только строки нужной группировки.
+            {
+                "expressionType": "SIMPLE",
+                "subject": "group_title",
+                "operator": "==",
+                "comparator": group_by,
+                "clause": "WHERE",
+            },
         ],
 
         "row_limit": 10000,
@@ -393,12 +478,13 @@ def chart_params(
     }
 
 
-# Ищет или создаёт график для одного title.
+# Ищет или создаёт график для одного числового поля.
 def ensure_chart(
     client: SupersetClient,
     dataset_id: int,
     dashboard_id: int,
     document_type: str,
+    group_by: str,
     field: dict,
 ) -> int:
     label = (
@@ -412,9 +498,10 @@ def ensure_chart(
     )
 
     params = chart_params(
-        dataset_id,
-        document_type,
-        field,
+        dataset_id=dataset_id,
+        document_type=document_type,
+        group_by=group_by,
+        field=field,
     )
 
     for item in client.list_items(
@@ -433,7 +520,9 @@ def ensure_chart(
                 "viz_type": "echarts_timeseries_bar",
                 "datasource_id": dataset_id,
                 "datasource_type": "table",
-                "dashboards": [dashboard_id],
+                "dashboards": [
+                    dashboard_id,
+                ],
                 "params": json.dumps(
                     params,
                     ensure_ascii=False,
@@ -451,7 +540,9 @@ def ensure_chart(
             "viz_type": "echarts_timeseries_bar",
             "datasource_id": dataset_id,
             "datasource_type": "table",
-            "dashboards": [dashboard_id],
+            "dashboards": [
+                dashboard_id,
+            ],
             "params": json.dumps(
                 params,
                 ensure_ascii=False,
@@ -551,6 +642,18 @@ def create_mart(
         )
     )
 
+    # Например document_date.
+    group_by = get_group_by(
+        document_type
+    )
+
+    # Проверяем, что дата была распознана.
+    validate_group_value(
+        clickhouse,
+        task_id,
+        group_by,
+    )
+
     client = SupersetClient()
     client.login()
 
@@ -574,6 +677,7 @@ def create_mart(
             dataset_id=dataset_id,
             dashboard_id=dashboard_id,
             document_type=document_type,
+            group_by=group_by,
             field=field,
         )
         for field in fields
@@ -601,6 +705,7 @@ def create_mart(
     return {
         "status": "published",
         "document_type": document_type,
+        "group_by": group_by,
         "dataset_id": dataset_id,
         "dashboard_id": dashboard_id,
         "chart_ids": chart_ids,

@@ -30,7 +30,22 @@ forms.replaceOne(
   {
     _id: "electricity",
 
+    // Поле, по которому строится ось BI
+    bi: {
+      group_by: "document_date",
+    },
+
     fields: [
+      {
+        id: "document_date",
+        label: "Дата документа",
+        type: "text",
+        required: true,
+        tooltip: "Дата документа",
+        placeholder: "дд.мм.гггг",
+        pattern: "^\\d{2}\\.\\d{2}\\.\\d{4}$",
+      },
+
       {
         id: "tariff_kw_day",
         label: "Тариф (день), ₽/кВт·ч",
@@ -92,6 +107,15 @@ forms.replaceOne(
       ],
 
       fields: {
+        document_date: {
+          crop: {
+            x: 0.6148235068152897,
+            y: 0.03190883229134406,
+            width: 0.11120005758913498,
+            height: 0.030199430561450625,
+          },
+        },
+
         tariff_kw_day: {
           crop: {
             x: 0.5435455739721046,

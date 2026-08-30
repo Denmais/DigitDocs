@@ -97,7 +97,6 @@ class Actionbar {
 
   // Включает выбор области для нужного поля.
   async #handleFieldCrop({ fieldId }) {
-    // Оставляем динамический импорт как в рабочей версии.
     const { cancelCrop, cropState } = await import('../../utils/cropManager.js');
 
     cancelCrop();

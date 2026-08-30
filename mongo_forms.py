@@ -3,6 +3,9 @@ from typing import Any
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
+from sqlalchemy.orm import Session
+
+from models import DocumentField, DocumentType
 
 
 MONGODB_HOST = os.getenv(
@@ -134,3 +137,74 @@ def list_form_ids() -> list[str]:
         )
         .sort("_id", 1)
     ]
+
+def sync_forms_to_sqlite(db: Session) -> None:
+    """Создаёт в SQLite типы документов и поля из MongoDB."""
+    form_ids = list_form_ids()
+
+    for form_id in form_ids:
+        form = get_form(form_id)
+
+        document_type = (
+            db.query(DocumentType)
+            .filter(
+                DocumentType.title == form_id
+            )
+            .first()
+        )
+
+        if document_type is None:
+            document_type = DocumentType(
+                title=form_id,
+            )
+
+            db.add(document_type)
+            db.flush()
+
+        for field in form.get("fields", []):
+            field_id = field.get("id")
+
+            if not field_id:
+                continue
+
+            document_field = (
+                db.query(DocumentField)
+                .filter(
+                    DocumentField.document_type_id
+                    == document_type.id,
+                    DocumentField.title
+                    == field_id,
+                )
+                .first()
+            )
+
+            if document_field is None:
+                document_field = DocumentField(
+                    document_type_id=document_type.id,
+                    title=field_id,
+                    ru_title=field.get("label"),
+                    value_type=field.get(
+                        "type",
+                        "text",
+                    ),
+                    unit=field.get("unit") or "",
+                )
+
+                db.add(document_field)
+
+            else:
+                # Заодно обновляем описание,
+                # если оно изменилось в Mongo.
+                document_field.ru_title = (
+                    field.get("label")
+                )
+
+                document_field.value_type = (
+                    field.get("type", "text")
+                )
+
+                document_field.unit = (
+                    field.get("unit") or ""
+                )
+
+    db.commit()

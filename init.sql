@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS analytics.extract_data
     value String,
     numeric_value Nullable(Float64),
 
+    confidence Nullable(Float64),
     timestamp DateTime
 )
 ENGINE = MergeTree
@@ -34,23 +35,48 @@ ORDER BY (
 );
 
 
--- Числовые значения для Superset.
-CREATE VIEW IF NOT EXISTS analytics.bi_numeric_values AS
+DROP VIEW IF EXISTS analytics.bi_numeric_values;
+
+
+CREATE VIEW analytics.bi_numeric_values AS
 SELECT
-    upload_id,
-    page,
+    n.upload_id,
+    n.page,
 
-    document_type,
-    filename,
+    n.document_type,
+    n.filename,
 
-    title,
-    ru_title,
-    unit,
-    value_type,
+    n.title,
+    n.ru_title,
+    n.unit,
+    n.value_type,
 
-    value,
-    numeric_value,
+    n.value,
+    n.numeric_value,
+    n.confidence,
 
-    timestamp
-FROM analytics.extract_data
-WHERE numeric_value IS NOT NULL;
+    -- Время фактического распознавания
+    n.timestamp,
+
+    -- Поле группировки
+    g.title AS group_title,
+    g.value AS group_value,
+
+    -- 25.03.2025 -> 2025-03-25
+    toDateOrNull(
+        concat(
+            substring(g.value, 7, 4),
+            '-',
+            substring(g.value, 4, 2),
+            '-',
+            substring(g.value, 1, 2)
+        )
+    ) AS group_date
+
+FROM analytics.extract_data AS n
+
+INNER JOIN analytics.extract_data AS g
+    ON n.upload_id = g.upload_id
+    AND n.page = g.page
+
+WHERE n.numeric_value IS NOT NULL;
